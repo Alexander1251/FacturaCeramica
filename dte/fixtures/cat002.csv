@@ -1,0 +1,12 @@
+codigo,texto
+01,Factura
+03,Comprobante de crédito fiscal
+04,Nota de remisión
+05,Nota de crédito
+06,Nota de débito
+07,Comprobante de retención
+08,Comprobante de liquidación
+09,Documento contable de liquidación
+11,Facturas de exportación
+14,Factura de sujeto excluido
+15,Comprobante de donación

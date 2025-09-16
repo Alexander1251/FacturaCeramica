@@ -1,0 +1,379 @@
+{% extends 'productos/base.html' %}
+
+{% block title %}Detalle de Receptor | {{ receptor.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reutilizar los mismos estilos que detail.html de productos */
+    .detail-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .detail-section:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-color: rgba(0,123,255,0.2);
+    }
+    
+    .detail-section h5 {
+        color: #495057;
+        border-bottom: 3px solid #dee2e6;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    /* Badges mejorados */
+    .badge {
+        font-size: 0.9em;
+        padding: 0.6em 1em;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .badge.fs-6 {
+        font-size: 1rem !important;
+        padding: 0.7em 1.2em;
+    }
+    
+    /* Indicadores de estado mejorados */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .status-complete::before {
+        content: "✅";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(40, 167, 69, 0.3));
+    }
+    
+    .status-incomplete::before {
+        content: "⚠️";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
+    }
+    
+    .status-minimal::before {
+        content: "❌";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(220, 53, 69, 0.3));
+    }
+    
+    /* Facturas recientes */
+    .facturas-card {
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    
+    .facturas-card .card-body {
+        padding: 2.5rem;
+    }
+    
+    .facturas-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .factura-item {
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .factura-item:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+        transform: translateX(5px);
+    }
+    
+    /* Progreso de completitud */
+    .progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .progress-high {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+    
+    .progress-medium {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+    
+    .progress-low {
+        background: linear-gradient(135deg, #dc3545, #e83e8c);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-user me-2"></i>Detalle de Receptor
+    </h1>
+    <a href="{% url 'dte:receptor_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al listado
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- Información básica -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Información Básica</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Nombre</dt>
+                        <dd class="col-sm-9">{{ receptor.nombre|default:"Sin especificar" }}</dd>
+
+                        <dt class="col-sm-3">Tipo de Documento</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.tipoDocumento %}
+                                <span class="badge bg-primary">{{ receptor.tipoDocumento.codigo }} - {{ receptor.tipoDocumento.texto }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Número de Documento</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.numDocumento %}
+                                <span class="badge bg-secondary">{{ receptor.numDocumento }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">NRC</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.nrc %}
+                                <span class="badge bg-info">{{ receptor.nrc }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Actividad Económica -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-briefcase me-2"></i>Actividad Económica</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Código de Actividad</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.codActividad %}
+                                <span class="badge bg-success">{{ receptor.codActividad.codigo }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Descripción</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.descActividad %}
+                                {{ receptor.descActividad }}
+                            {% else %}
+                                <em class="text-muted">Sin descripción</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Dirección -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-map-marker-alt me-2"></i>Dirección</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Departamento</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.departamento %}
+                                <span class="badge bg-outline-primary">{{ receptor.departamento.texto }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Municipio</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.municipio %}
+                                <span class="badge bg-outline-secondary">{{ receptor.municipio.texto }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Dirección Completa</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.complemento %}
+                                {{ receptor.complemento }}
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Contacto -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-phone me-2"></i>Información de Contacto</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Teléfono</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.telefono %}
+                                <a href="tel:{{ receptor.telefono }}" class="badge bg-info text-decoration-none">
+                                    <i class="fas fa-phone me-1"></i>{{ receptor.telefono }}
+                                </a>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">Correo Electrónico</dt>
+                        <dd class="col-sm-9">
+                            {% if receptor.correo %}
+                                <a href="mailto:{{ receptor.correo }}" class="badge bg-success text-decoration-none">
+                                    <i class="fas fa-envelope me-1"></i>{{ receptor.correo }}
+                                </a>
+                            {% else %}
+                                <em class="text-muted">Sin especificar</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- Estado de completitud -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Estado de la Información</h5>
+                    
+                    <div class="text-center mb-3">
+                        {% if completitud >= 75 %}
+                            <div class="progress-circle progress-high">
+                                {{ completitud }}%
+                            </div>
+                            <div class="status-indicator status-complete mt-2">
+                                <span class="badge bg-success fs-6">Información Completa</span>
+                                <small class="text-success d-block">Datos suficientes para facturación</small>
+                            </div>
+                        {% elif completitud >= 50 %}
+                            <div class="progress-circle progress-medium">
+                                {{ completitud }}%
+                            </div>
+                            <div class="status-indicator status-incomplete mt-2">
+                                <span class="badge bg-warning text-dark fs-6">Información Parcial</span>
+                                <small class="text-warning d-block">Faltan algunos datos</small>
+                            </div>
+                        {% else %}
+                            <div class="progress-circle progress-low">
+                                {{ completitud }}%
+                            </div>
+                            <div class="status-indicator status-minimal mt-2">
+                                <span class="badge bg-danger fs-6">Información Mínima</span>
+                                <small class="text-danger d-block">Requiere más datos</small>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                   
+                    </dl>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Estadísticas</h5>
+                    <dl class="row">
+                        <dt class="col-sm-7">Total de Facturas</dt>
+                        <dd class="col-sm-5">
+                            <span class="badge bg-primary fs-6">{{ facturas_count }}</span>
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Acciones -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'dte:receptor_update' receptor.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar Receptor
+                    </a>
+                    <a href="{% url 'dte:receptor_delete' receptor.id %}" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar Receptor
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Facturas asociadas -->
+{% if facturas_recientes %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm facturas-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-file-invoice me-2"></i>Facturas Recientes
+                </h5>
+                
+                <div class="facturas-list">
+                    {% for factura in facturas_recientes %}
+                    <div class="factura-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ factura.identificacion.numeroControl }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ factura.identificacion.fecEmi }}
+                                    <i class="fas fa-clock me-1 ms-2"></i>{{ factura.identificacion.horEmi }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{% if factura.estado_hacienda == 'ACEPTADO' %}success{% elif factura.estado_hacienda == 'RECHAZADO' %}danger{% else %}warning{% endif %}">
+                                    {{ factura.get_estado_hacienda_display }}
+                                </span>
+                                <br>
+                                <small class="text-muted">${{ factura.resumen.totalPagar|floatformat:2 }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if facturas_count > 5 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Mostrando las 5 facturas más recientes de {{ facturas_count }} total
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

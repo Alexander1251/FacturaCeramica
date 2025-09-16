@@ -1,0 +1,264 @@
+{% extends 'productos/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ titulo }}</h3>
+                </div>
+                
+                <form method="post" id="emisorForm">
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        
+                        <!-- Información Fiscal -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Información Fiscal</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.nit.id_for_label }}">NIT *</label>
+                                    {{ form.nit }}
+                                    {% if form.nit.errors %}
+                                        <div class="text-danger">{{ form.nit.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.nrc.id_for_label }}">NRC *</label>
+                                    {{ form.nrc }}
+                                    {% if form.nrc.errors %}
+                                        <div class="text-danger">{{ form.nrc.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información General -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Información General</h5>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.nombre.id_for_label }}">Razón Social *</label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger">{{ form.nombre.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.tipoEstablecimiento.id_for_label }}">Tipo Establecimiento *</label>
+                                    {{ form.tipoEstablecimiento }}
+                                    {% if form.tipoEstablecimiento.errors %}
+                                        <div class="text-danger">{{ form.tipoEstablecimiento.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.nombreComercial.id_for_label }}">Nombre Comercial</label>
+                                    {{ form.nombreComercial }}
+                                    {% if form.nombreComercial.errors %}
+                                        <div class="text-danger">{{ form.nombreComercial.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actividad Económica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Actividad Económica</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.codActividad.id_for_label }}">Código de Actividad *</label>
+                                    {{ form.codActividad }}
+                                    {% if form.codActividad.errors %}
+                                        <div class="text-danger">{{ form.codActividad.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.descActividad.id_for_label }}">Descripción Actividad *</label>
+                                    {{ form.descActividad }}
+                                    {% if form.descActividad.errors %}
+                                        <div class="text-danger">{{ form.descActividad.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Ubicación</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.departamento.id_for_label }}">Departamento *</label>
+                                    {{ form.departamento }}
+                                    {% if form.departamento.errors %}
+                                        <div class="text-danger">{{ form.departamento.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.municipio.id_for_label }}">Municipio *</label>
+                                    {{ form.municipio }}
+                                    {% if form.municipio.errors %}
+                                        <div class="text-danger">{{ form.municipio.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.complemento.id_for_label }}">Dirección Completa *</label>
+                                    {{ form.complemento }}
+                                    {% if form.complemento.errors %}
+                                        <div class="text-danger">{{ form.complemento.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contacto -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Información de Contacto</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.telefono.id_for_label }}">Teléfono *</label>
+                                    {{ form.telefono }}
+                                    {% if form.telefono.errors %}
+                                        <div class="text-danger">{{ form.telefono.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.correo.id_for_label }}">Correo Electrónico *</label>
+                                    {{ form.correo }}
+                                    {% if form.correo.errors %}
+                                        <div class="text-danger">{{ form.correo.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Códigos Ministerio de Hacienda -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">Códigos del Ministerio de Hacienda</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.codEstableMH.id_for_label }}">Código Establecimiento MH</label>
+                                    {{ form.codEstableMH }}
+                                    {% if form.codEstableMH.errors %}
+                                        <div class="text-danger">{{ form.codEstableMH.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.codEstable.id_for_label }}">Código Establecimiento *</label>
+                                    {{ form.codEstable }}
+                                    {% if form.codEstable.errors %}
+                                        <div class="text-danger">{{ form.codEstable.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.codPuntoVentaMH.id_for_label }}">Código Punto Venta MH</label>
+                                    {{ form.codPuntoVentaMH }}
+                                    {% if form.codPuntoVentaMH.errors %}
+                                        <div class="text-danger">{{ form.codPuntoVentaMH.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.codPuntoVenta.id_for_label }}">Código Punto Venta *</label>
+                                    {{ form.codPuntoVenta }}
+                                    {% if form.codPuntoVenta.errors %}
+                                        <div class="text-danger">{{ form.codPuntoVenta.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
+                        <a href="{% url 'dte:factura_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tom Select CSS y JS -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar Tom Select para código de actividad
+    new TomSelect('.tom-select-actividad', {
+        placeholder: 'Buscar actividad económica...',
+        allowEmptyOption: true,
+        searchField: ['text'],
+        valueField: 'value',
+        labelField: 'text',
+        render: {
+            option: function(data, escape) {
+                return '<div>' + escape(data.text) + '</div>';
+            }
+        }
+    });
+
+    // Cargar municipios cuando cambie departamento
+    document.getElementById('id_departamento').addEventListener('change', function() {
+        const departamentoId = this.value;
+        const municipioSelect = document.getElementById('id_municipio');
+        
+        if (departamentoId) {
+            fetch(`/dte/ajax/municipios/${departamentoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    municipioSelect.innerHTML = '<option value="">---------</option>';
+                    data.municipios.forEach(municipio => {
+                        const option = document.createElement('option');
+                        option.value = municipio.codigo;
+                        option.textContent = municipio.texto;
+                        municipioSelect.appendChild(option);
+                    });
+                });
+        } else {
+            municipioSelect.innerHTML = '<option value="">---------</option>';
+        }
+    });
+});
+</script>
+{% endblock %}

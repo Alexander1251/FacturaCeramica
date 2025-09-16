@@ -1,0 +1,41 @@
+codigo,texto
+1,metro
+2,yarda
+6,milímetro
+9,kilómetro cuadrado
+10,hectárea
+13,metro cuadrado
+15,vara cuadrada
+18,metro cúbico
+20,barril
+22,galón
+23,litro
+24,botella
+26,mililitro
+30,tonelada
+32,quintal
+33,arroba
+34,kilogramo
+36,libra
+37,onza troy
+38,onza
+39,gramo
+40,miligramo
+42,megawatt
+43,kilowatt
+44,watt
+45,megavoltio-amperio
+46,kilovoltio-amperio
+47,voltio-amperio
+49,gigawatt-hora
+50,megawatt-hora
+51,kilowatt-hora
+52,watt-hora
+53,kilovoltio
+54,voltio
+55,millar
+56,medio millar
+57,ciento
+58,docena
+59,unidad
+99,otra

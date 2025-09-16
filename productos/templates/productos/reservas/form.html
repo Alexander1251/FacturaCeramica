@@ -1,0 +1,212 @@
+{# productos/templates/productos/reservas/form.html #}
+{% extends 'productos/base.html' %}
+
+{% block title %}
+  {% if modo == "editar" %}
+    Editar Reserva #{{ reserva.id }}
+  {% else %}
+    Nueva Reserva
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">
+  {% if modo == "editar" %}Editar Reserva{% else %}Crear Nueva Reserva{% endif %}
+</h1>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {# -- Selección existente vs nuevo -- #}
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="fas fa-user me-2"></i>Información del Tercero</h5>
+    </div>
+    <div class="card-body">
+
+      <div class="mb-3">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="tipo_tercero"
+                 id="radio_existente" value="existente" checked>
+          <label class="form-check-label" for="radio_existente">Tercero existente</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="tipo_tercero"
+                 id="radio_nuevo" value="nuevo">
+          <label class="form-check-label" for="radio_nuevo">Nuevo tercero</label>
+        </div>
+      </div>
+
+      {# Bloque EXISTENTE #}
+      <div id="bloque-existente" class="mb-4">
+        <label for="{{ form_tercero.dui.id_for_label }}" class="form-label">
+          {{ form_tercero.dui.label }}*</label>
+        {{ form_tercero.dui }}
+        {% if form_tercero.dui.errors %}
+          <div class="text-danger small">{{ form_tercero.dui.errors }}</div>
+        {% endif %}
+        <div class="form-text">Introduce el DUI de un tercero ya registrado.</div>
+      </div>
+
+      {# Bloque NUEVO #}
+      <div id="bloque-nuevo" style="display:none">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form_tercero.nombres.id_for_label }}" class="form-label">
+              {{ form_tercero.nombres.label }}*</label>
+            {{ form_tercero.nombres }}
+            {% if form_tercero.nombres.errors %}
+              <div class="text-danger small">{{ form_tercero.nombres.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="{{ form_tercero.apellidos.id_for_label }}" class="form-label">
+              {{ form_tercero.apellidos.label }}*</label>
+            {{ form_tercero.apellidos }}
+            {% if form_tercero.apellidos.errors %}
+              <div class="text-danger small">{{ form_tercero.apellidos.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="{{ form_tercero.telefono.id_for_label }}" class="form-label">
+              {{ form_tercero.telefono.label }}*</label>
+            {{ form_tercero.telefono }}
+            {% if form_tercero.telefono.errors %}
+              <div class="text-danger small">{{ form_tercero.telefono.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="{{ form_tercero.correo.id_for_label }}" class="form-label">
+              {{ form_tercero.correo.label }}*</label>
+            {{ form_tercero.correo }}
+            {% if form_tercero.correo.errors %}
+              <div class="text-danger small">{{ form_tercero.correo.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="{{ form_tercero.edad.id_for_label }}" class="form-label">
+              {{ form_tercero.edad.label }}*</label>
+            {{ form_tercero.edad }}
+            {% if form_tercero.edad.errors %}
+              <div class="text-danger small">{{ form_tercero.edad.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="{{ form_tercero.sexo.id_for_label }}" class="form-label">
+              {{ form_tercero.sexo.label }}*</label>
+            {{ form_tercero.sexo }}
+            {% if form_tercero.sexo.errors %}
+              <div class="text-danger small">{{ form_tercero.sexo.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="{{ form_tercero.direccion.id_for_label }}" class="form-label">
+              {{ form_tercero.direccion.label }}*</label>
+            {{ form_tercero.direccion }}
+            {% if form_tercero.direccion.errors %}
+              <div class="text-danger small">{{ form_tercero.direccion.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {# === Productos a Reservar === #}
+  <div class="card mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Productos a Reservar</h5>
+    </div>
+    <div class="card-body">
+      {{ formset.management_form }}
+      <div id="item-formset">
+        {% for f in formset %}
+        <div class="item-form mb-3">
+          <div class="row">
+            <div class="col-md-6 mb-2">
+              <label for="{{ f.producto.id_for_label }}" class="form-label">Producto*</label>
+              {{ f.producto }}
+            </div>
+            <div class="col-md-4 mb-2">
+              <label for="{{ f.cantidad.id_for_label }}" class="form-label">Cantidad*</label>
+              {{ f.cantidad }}
+            </div>
+            <div class="col-md-2 mb-2 d-flex align-items-end">
+              <button type="button" class="btn btn-danger remove-form"
+                {% if forloop.first %} style="display:none"{% endif %}>
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button type="button" id="add-more" class="btn btn-secondary">
+        <i class="fas fa-plus me-2"></i>Añadir más productos
+      </button>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-between">
+    <a href="{% url 'reserva_list' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Cancelar
+    </a>
+    <button type="submit" class="btn btn-primary">
+      <i class="fas fa-save me-2"></i>
+      {% if modo == "editar" %}Actualizar{% else %}Guardar{% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Toggle bloques existente/nuevo
+  const ex = document.getElementById('bloque-existente');
+  const nu = document.getElementById('bloque-nuevo');
+  document.getElementById('radio_existente').onclick = () => {
+    ex.style.display = 'block'; nu.style.display = 'none';
+  };
+  document.getElementById('radio_nuevo').onclick = () => {
+    ex.style.display = 'none'; nu.style.display = 'block';
+  };
+
+  // Formset dinámico
+  const container = document.getElementById('item-formset');
+  const total     = document.querySelector('input[name="items-TOTAL_FORMS"]');
+  const addBtn    = document.getElementById('add-more');
+
+  function assignRemove() {
+    container.querySelectorAll('.remove-form').forEach(btn => {
+      btn.onclick = () => {
+        btn.closest('.item-form').remove();
+        total.value = container.querySelectorAll('.item-form').length;
+      };
+    });
+  }
+
+  addBtn.onclick = () => {
+    const forms = container.querySelectorAll('.item-form');
+    const idx   = forms.length;
+    const nuevo = forms[idx-1].cloneNode(true);
+    nuevo.querySelectorAll('input, select').forEach(el => {
+      el.value = '';
+      el.name  = el.name.replace(/\d+/, idx);
+      el.id    = el.id.replace(/\d+/, idx);
+    });
+    nuevo.querySelector('.remove-form').style.display = 'block';
+    container.appendChild(nuevo);
+    total.value = idx + 1;
+    assignRemove();
+  };
+
+  assignRemove();
+});
+</script>
+{% endblock %}

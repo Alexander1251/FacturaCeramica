@@ -1,0 +1,338 @@
+{# templates/dte/factura_list.html - VERSIÓN CORREGIDA #}
+{% extends "productos/base.html" %}
+{% load humanize %}
+
+{% block title %}Facturas Electrónicas{% endblock %}
+
+{% block extra_css %}
+<!-- Responsive para DataTables - VERSIÓN COMPATIBLE -->
+<link rel="stylesheet" type="text/css"
+  href="https://cdn.datatables.net/responsive/2.3.1/css/responsive.bootstrap5.min.css">
+<style>
+  .btn-group .btn {
+    margin: 0 1px;
+  }
+
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.875rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+      <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+      Facturas Electrónicas
+    </h1>
+    <div class="btn-group">
+      <a href="{% url 'dte:crear_factura' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Nueva Factura
+      </a>
+      <a href="{% url 'dte:crear_nota_credito' %}" class="btn btn-warning">
+        <i class="fas fa-minus-circle me-1"></i> Nota Crédito
+      </a>
+      <button id="btnDescargarExcel" class="btn btn-success">
+        <i class="fas fa-file-excel me-1"></i> Descargar Excel
+      </button>
+      <button type="button" id="btnDescargarJson" class="btn btn-danger btn-sm">
+              <i class="fas fa-file-code me-1"></i> Descargar JSONs
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="card-title mb-3">
+        <i class="fas fa-filter me-2"></i>Filtros Rápidos
+      </h6>
+      <div class="row g-3">
+        <div class="col-md-2">
+          <label class="form-label">Tipo DTE</label>
+          <select id="filtroTipo" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="01">Factura Consumidor</option>
+            <option value="03">Crédito Fiscal</option>
+            <option value="05">Nota Crédito</option>
+            <option value="14">Factura Sujeto Excluido</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Estado</label>
+          <select id="filtroEstado" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="ACEPTADO">Aceptado</option>
+            <option value="ACEPTADO CON OBSERVACIONES">Aceptado con Obs.</option>
+            <option value="RECHAZADO">Rechazado</option>
+            <option value="NO ENVIADO">No Enviado</option>
+            <option value="ANULADO">Anulado</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Sello</label>
+          <select id="filtroSello" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="con_sello">Con Sello</option>
+            <option value="sin_sello">Sin Sello</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Estado Correo</label>
+          <select id="filtroCorreo" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="enviado">Enviado</option>
+            <option value="no_enviado">No Enviado</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Desde</label>
+          <input type="date" id="fechaDesde" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Hasta</label>
+          <input type="date" id="fechaHasta" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Sucursal</label>
+          <select id="filtroSucursal" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            {% for sucursal in sucursales %}
+            <option value="{{ sucursal.id }}" {% if sucursal.id == sucursal_usuario %}selected{% endif %}>{{ sucursal.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="btn-group">
+            <button type="button" id="aplicarFiltros" class="btn btn-primary btn-sm">
+              <i class="fas fa-search me-1"></i> Aplicar
+            </button>
+            <button type="button" id="limpiarFiltros" class="btn btn-outline-secondary btn-sm">
+              <i class="fas fa-eraser me-1"></i> Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de facturas -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table id="facturasTable" class="table table-hover mb-0 align-middle" style="width:100%">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 8%">Tipo</th>
+              <th style="width: 13%">Número Control</th>
+              <th style="width: 10%">Fecha Emisión</th>
+              <th style="width: 20%">Receptor</th>
+              <th style="width: 12%">Estado</th>
+              <th style="width: 10%">Total</th>
+              <th style="width: 8%">Sello</th>
+              <th style="width: 9%">Estado Correo</th>
+              <th style="width: 10%">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Los datos se cargan por DataTables -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Librerías adicionales para DataTables - VERSIONES COMPATIBLES CON 2.3.2 -->
+<script src="https://cdn.datatables.net/responsive/2.3.1/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.3.1/js/responsive.bootstrap5.min.js"></script>
+
+<script>
+  console.log('=== Inicializando DataTable de Facturas ===');
+
+  $(document).ready(function () {
+    console.log('✅ DOM ready, creando DataTable');
+
+    let table;
+
+    try {
+      table = $('#facturasTable').DataTable({
+        // Server-side processing
+        processing: true,
+        serverSide: true,
+        responsive: true,
+
+        // AJAX configuration
+        ajax: {
+          url: "{% url 'dte:factura_datatable' %}",
+          type: "GET",
+          data: function (d) {
+            console.log('📤 Enviando petición AJAX:', d);
+            // Filtros personalizados
+            d.filtro_tipo = $('#filtroTipo').val();
+            d.filtro_estado = $('#filtroEstado').val();
+            d.filtro_sello = $('#filtroSello').val();
+            d.filtro_correo = $('#filtroCorreo').val();
+            d.filtro_sucursal = $('#filtroSucursal').val(); 
+            d.fecha_desde = $('#fechaDesde').val();
+            d.fecha_hasta = $('#fechaHasta').val();
+            return d;
+          },
+          dataSrc: function (json) {
+            console.log('📥 Respuesta recibida:', json);
+            return json.data;
+          },
+          error: function (xhr, status, error) {
+            console.error('❌ Error AJAX:', status, error);
+            alert('Error al cargar los datos: ' + error);
+          }
+        },
+
+        // Columnas - ACTUALIZADO con Estado Correo
+        columns: [
+          { data: 0, orderable: true, searchable: false },   // Tipo
+          { data: 1, orderable: true, searchable: true },    // Número Control  
+          { data: 2, orderable: true, searchable: false },   // Fecha
+          { data: 3, orderable: true, searchable: true },    // Receptor
+          { data: 4, orderable: false, searchable: false },  // Estado
+          { data: 5, orderable: true, searchable: false, className: 'text-end' }, // Total
+          { data: 6, orderable: false, searchable: false },  // Sello
+          { data: 7, orderable: false, searchable: false },  // Estado Correo
+          { data: 8, orderable: false, searchable: false, className: 'text-center' } // Acciones
+        ],
+
+        // Configuración de visualización
+        order: [[2, 'desc']], // Ordenar por fecha descendente
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+
+        // Idioma
+        language: {
+          processing: "Procesando...",
+          search: "Buscar:",
+          lengthMenu: "Mostrar _MENU_ registros",
+          info: "Mostrando de _START_ a _END_ de _TOTAL_ registros",
+          infoEmpty: "Mostrando 0 registros",
+          infoFiltered: "(filtrado de _MAX_ registros)",
+          loadingRecords: "Cargando...",
+          zeroRecords: "No se encontraron registros",
+          emptyTable: "No hay datos disponibles",
+          paginate: {
+            first: "Primero",
+            previous: "Anterior",
+            next: "Siguiente",
+            last: "Último"
+          }
+        },
+
+        // Callbacks
+        initComplete: function () {
+          console.log('✅ DataTable inicializado correctamente');
+          setupCustomFilters();
+        },
+
+        drawCallback: function () {
+          console.log('✅ Tabla dibujada correctamente');
+        }
+      });
+
+      console.log('✅ DataTable creado exitosamente');
+
+    } catch (error) {
+      console.error('💥 Error al crear DataTable:', error);
+      alert('Error al inicializar la tabla: ' + error.message);
+    }
+
+    // Configurar filtros personalizados
+    function setupCustomFilters() {
+      console.log('⚙️ Configurando filtros personalizados');
+
+      // Eventos de filtros - ACTUALIZADO con filtro de correo
+      $('#filtroTipo, #filtroEstado, #filtroSello, #filtroCorreo, #filtroSucursal, #fechaDesde, #fechaHasta').on('change', function () {
+        console.log('🔄 Filtro cambiado, recargando tabla');
+        table.ajax.reload();
+      });
+
+      // Botón aplicar filtros
+      $('#aplicarFiltros').on('click', function () {
+        console.log('🔍 Aplicando filtros');
+        table.ajax.reload();
+      });
+
+      // Botón limpiar filtros - ACTUALIZADO con filtro de correo
+      $('#limpiarFiltros').on('click', function () {
+        console.log('🧹 Limpiando filtros');
+        $('#filtroTipo, #filtroEstado, #filtroSello, #filtroCorreo, #filtroSucursal').val('');
+        $('#fechaDesde, #fechaHasta').val('');
+        table.ajax.reload();
+      });
+    }
+  });
+
+  // Función global para recargar la tabla
+  function recargarTabla() {
+    console.log('🔄 Recargando tabla...');
+    if ($.fn.DataTable.isDataTable('#facturasTable')) {
+      $('#facturasTable').DataTable().ajax.reload();
+      console.log('✅ Tabla recargada');
+    } else {
+      console.warn('⚠️ La tabla no está inicializada como DataTable');
+    }
+  }
+
+  console.log('=== Script de facturas cargado ===');
+  // Botón descargar Excel
+    $('#btnDescargarExcel').on('click', function() {
+      console.log('🔄 Descargando Excel...');
+      
+      // Obtener los mismos filtros que usa la DataTable
+      const params = new URLSearchParams({
+        filtro_tipo: $('#filtroTipo').val() || '',
+        filtro_estado: $('#filtroEstado').val() || '',
+        filtro_sello: $('#filtroSello').val() || '',
+        filtro_correo: $('#filtroCorreo').val() || '',
+        filtro_sucursal: $('#filtroSucursal').val() || '',
+        fecha_desde: $('#fechaDesde').val() || '',
+        fecha_hasta: $('#fechaHasta').val() || '',
+        search: $('#facturasTable_filter input').val() || ''
+      });
+      
+      // Construir URL
+      const url = "{% url 'dte:descargar_lista_facturas_excel' %}" + '?' + params.toString();
+      
+      // Abrir en nueva ventana para descargar
+      window.open(url, '_blank');
+    });
+
+    // Botón descargar JSON
+    $('#btnDescargarJson').on('click', function() {
+      console.log('📄 Descargando JSON...');
+      
+      // Obtener los mismos filtros que usa la DataTable
+      const params = new URLSearchParams({
+        filtro_tipo: $('#filtroTipo').val() || '',
+        filtro_estado: $('#filtroEstado').val() || '',
+        filtro_sello: $('#filtroSello').val() || '',
+        filtro_correo: $('#filtroCorreo').val() || '',
+        filtro_sucursal: $('#filtroSucursal').val() || '',
+        fecha_desde: $('#fechaDesde').val() || '',
+        fecha_hasta: $('#fechaHasta').val() || '',
+        search: $('#facturasTable_filter input').val() || ''
+      });
+      
+      // Construir URL
+      const url = "{% url 'dte:descargar_lista_facturas_json' %}" + '?' + params.toString();
+      
+      // Abrir en nueva ventana para descargar
+      window.open(url, '_blank');
+    });
+
+
+</script>
+{% endblock %}

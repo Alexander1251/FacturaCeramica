@@ -1,0 +1,2802 @@
+{% extends 'productos/base.html' %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+
+{% block title %}Crear {{ titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .section-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+  }
+
+  .section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #007bff;
+  }
+
+  .btn-action {
+    margin: 5px;
+  }
+
+  .stock-warning {
+    border-color: #ffc107 !important;
+    background-color: #fff3cd;
+    }
+
+    .stock-error {
+        border-color: #dc3545 !important;
+        background-color: #f8d7da;
+    }
+
+    .stock-ok {
+        border-color: #28a745 !important;
+        background-color: #d4edda;
+    }
+
+  .receptor-info,
+  .item-info {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    margin-top: 10px;
+  }
+
+  .autocomplete-suggestions {
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    position: absolute;
+    z-index: 1000;
+    width: 100%;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .autocomplete-suggestion {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+  }
+
+  .autocomplete-suggestion:hover {
+    background: #f8f9fa;
+  }
+
+  .autocomplete-suggestion:last-child {
+    border-bottom: none;
+  }
+
+  .autocomplete-suggestion.text-muted {
+    cursor: default;
+    background: #f8f9fa;
+    font-style: italic;
+  }
+
+    /* Estilos para feedback de existencias */
+  .existencias-modificando {
+      border-color: #007bff !important;
+      background-color: #e3f2fd !important;
+      position: relative;
+  }
+
+  .existencias-modificando::after {
+      content: "Actualizando...";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #007bff;
+      pointer-events: none;
+  }
+
+  .existencias-actualizado {
+      border-color: #28a745 !important;
+      background-color: #d4edda !important;
+      transition: all 0.3s ease;
+  }
+
+  .existencias-error {
+      border-color: #dc3545 !important;
+      background-color: #f8d7da !important;
+      animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+  }
+
+  /* Mejorar feedback visual para cantidad vs existencias */
+  .stock-warning {
+      border-color: #ffc107 !important;
+      background-color: #fff3cd !important;
+  }
+
+  .stock-error {
+      border-color: #dc3545 !important;
+      background-color: #f8d7da !important;
+  }
+
+  .stock-ok {
+      border-color: #28a745 !important;
+      background-color: #d4edda !important;
+  }
+
+  .autocomplete-suggestion.text-muted:hover {
+    background: #f8f9fa;
+  }
+
+  .readonly-field {
+    background-color: #e9ecef;
+  }
+
+  .ccf-required {
+    border-left: 3px solid #dc3545;
+    background-color: #fff5f5;
+  }
+
+  .ccf-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Crear {{ titulo }}</h2>
+        <div class="btn-group" role="group">
+          <a href="{% url 'dte:crear_factura' %}?tipo=01" 
+             class="btn {% if tipo_dte == '01' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Factura (FC)
+          </a>
+          <a href="{% url 'dte:crear_factura' %}?tipo=03" 
+             class="btn {% if tipo_dte == '03' %}btn-success{% else %}btn-outline-success{% endif %}">
+            Crédito Fiscal (CCF)
+          </a>
+          <a href="{% url 'dte:crear_factura' %}?tipo=14" 
+             class="btn {% if tipo_dte == '14' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+            Sujeto Excluido (FSE)
+          </a>
+        </div>
+      </div>
+      {% if es_fse %}
+      <div class="alert alert-warning mb-4">
+        <h6><i class="fas fa-user-times me-2"></i>Factura de Sujeto Excluido</h6>
+        <p class="mb-0">Para FSE, son obligatorios: tipo de documento, número de documento y nombre del sujeto excluido.
+        </p>
+      </div>
+      {% endif %}
+
+      {% if es_ccf %}
+      <div class="alert alert-info mb-4">
+        <h6><i class="fas fa-info-circle me-2"></i>Crédito Fiscal</h6>
+        <p class="mb-0">Para CCF, todos los campos del receptor son obligatorios y el tipo de documento debe ser NIT.</p>
+      </div>
+      {% endif %}
+
+      <form method="post" id="facturaForm" action="{% url 'dte:crear_factura' %}">
+        {% csrf_token %}
+        <input type="hidden" name="tipo_dte" value="{{ tipo_dte }}">
+
+        <!-- Sección Identificación -->
+        <div class="section-card">
+          <h4 class="section-title">Identificación</h4>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Tipo de Documento</label>
+                <input type="text" class="form-control" value="{{ titulo }}" readonly>
+              </div>
+              <!-- En la sección de identificación, después del campo tipo_dte -->
+              {% if tipo_dte == '01' %}
+
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" name="enviar_hacienda" id="enviar_hacienda" value="1"
+                    checked>
+                  <label class="form-check-label" for="enviar_hacienda">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Enviar a Hacienda para validación oficial
+                  </label>
+                  <div class="form-text">
+                    Si no marca esta opción, se generará solo el imprimible para el receptor (sin validez fiscal
+                    oficial).
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ identificacion_form.ambiente.id_for_label }}" class="form-label">{{ identificacion_form.ambiente.label }}</label>
+                {{ identificacion_form.ambiente|add_class:"form-control" }}
+                {% if identificacion_form.ambiente.help_text %}
+                <div class="form-text">{{ identificacion_form.ambiente.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ identificacion_form.fecEmi.id_for_label }}" class="form-label">{{ identificacion_form.fecEmi.label }}</label>
+                {{ identificacion_form.fecEmi|add_class:"form-control" }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ identificacion_form.horEmi.id_for_label }}" class="form-label">{{ identificacion_form.horEmi.label }}</label>
+                {{ identificacion_form.horEmi|add_class:"form-control" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Receptor -->
+        <div class="section-card">
+          <h4 class="section-title">Receptor</h4>
+          
+          {% if es_ccf %}
+          <div class="ccf-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>CCF:</strong> Todos los campos son obligatorios. Solo se permite NIT como tipo de documento.
+          </div>
+          {% endif %}
+          
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal"
+              data-bs-target="#receptorModal">
+              <i class="fas fa-plus"></i> Crear Receptor
+            </button>
+            <button type="button" class="btn btn-info btn-action" data-bs-toggle="modal"
+              data-bs-target="#buscarReceptorModal">
+              <i class="fas fa-search"></i> Buscar Receptor
+            </button>
+            <button type="button" class="btn btn-warning btn-action" id="editarReceptor" style="display: none;">
+              <i class="fas fa-edit"></i> Editar Receptor
+            </button>
+            <button type="button" class="btn btn-danger btn-action" id="eliminarReceptor" style="display: none;">
+              <i class="fas fa-trash"></i> Eliminar Receptor
+            </button>
+          </div>
+
+          <div id="receptorForm" style="display: none;">
+            <div class="receptor-info {% if es_ccf %}ccf-required{% endif %}">
+              <h6 class="mb-3">Información del Receptor Seleccionado</h6>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Tipo de Documento {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="tipoDocumentoDisplay" readonly disabled>
+                    <input type="hidden" name="tipoDocumento">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Número de Documento {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="numDocumento" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">NRC {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="nrc" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Nombre {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="nombre" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Código Actividad Económica {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="codActividadDisplay" readonly disabled>
+                    <input type="hidden" name="codActividad">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Descripción Actividad {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="descActividad" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Departamento {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="departamentoDisplay" readonly disabled>
+                    <input type="hidden" name="departamento" id="receptorDepartamento">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Municipio {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="municipioDisplay" readonly disabled>
+                    <input type="hidden" name="municipio" id="receptorMunicipio">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Teléfono {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="text" class="form-control readonly-field" name="telefono" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">Correo Electrónico {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <input type="email" class="form-control readonly-field" name="correo" readonly disabled {% if es_ccf %}required{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Dirección/Complemento {% if es_ccf %}<span class="text-danger">*</span>{% endif %}</label>
+                    <textarea class="form-control readonly-field" name="complemento" rows="2" readonly disabled {% if es_ccf %}required{% endif %}></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección Items -->
+        <div class="section-card">
+          <h4 class="section-title">Items de la {{ titulo }}</h4>
+          
+          {% if es_ccf %}
+          <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>CCF:</strong> Los precios de productos incluyen IVA. El sistema calculará automáticamente el precio sin IVA y el IVA por separado.
+          </div>
+          {% endif %}
+          
+          <div class="mb-3">
+            <button type="button" class="btn btn-success btn-action" data-bs-toggle="modal" data-bs-target="#itemModal">
+              <i class="fas fa-plus"></i> Agregar Item
+            </button>
+          </div>
+
+          <div id="itemsContainer">
+            <!-- Los items se agregarán aquí dinámicamente -->
+          </div>
+
+          <div id="itemFormset" style="display: none;">
+            {{ item_formset.management_form }}
+            {% for form in item_formset %}
+            <div class="item-form">
+              {% for field in form %}
+              <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field|add_class:"form-control" }}
+                {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Sección Resumen y Totales -->
+        <div class="section-card">
+          <h4 class="section-title">Resumen</h4>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  <h6>Totales</h6>
+                  <div class="row">
+                    <div class="col-8">Subtotal {% if es_ccf %}(sin IVA){% else %}Gravado{% endif %}:</div>
+                    <div class="col-4 text-end" id="totalGravado">$0.00</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-8">IVA (13%):</div>
+                    <div class="col-4 text-end" id="totalIVA">$0.00</div>
+                  </div>
+                  <hr>
+                  <div class="row fw-bold">
+                    <div class="col-8">Total a Pagar:</div>
+                    <div class="col-4 text-end" id="totalPagar">$0.00</div>
+                  </div>
+                  {% if es_ccf %}
+                  <small class="text-muted">* Para CCF: Total = Subtotal + IVA</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="section-card">
+          <div class="d-flex justify-content-end">
+            <a href="{% url 'dte:factura_list' %}" class="btn btn-secondary me-2">
+              <i class="fas fa-times"></i> Cancelar
+            </a>
+            <button type="submit" class="btn {% if es_ccf %}btn-success{% else %}btn-primary{% endif %}">
+              <i class="fas fa-save"></i> Crear {{ titulo }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Receptor -->
+<div class="modal fade" id="receptorModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Crear Receptor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <!-- AGREGAR: Contenedor de mensajes de validación -->
+        <div id="validationMessages" class="alert alert-danger" style="display: none;">
+          <ul id="validationList" class="mb-0"></ul>
+        </div>
+        
+        <form id="receptorModalForm">
+          {% if es_ccf %}
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Para CCF solo se permite NIT y todos los campos son obligatorios.
+          </div>
+          {% elif es_fse %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Para FSE son obligatorios todos los campos excepto teléfono, código de actividad y descripción de actividad.
+          </div>
+          {% else %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Para Factura son obligatorios: nombre, tipo de documento, número de documento y correo.
+          </div>
+          {% endif %}
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Tipo de Documento <span class="text-danger campo-obligatorio">*</span></label>
+                <select class="form-select" name="tipoDocumento" required {% if es_ccf %}data-ccf-only="36"{% endif %}>
+                  <option value="">Seleccione...</option>
+                  {% for tipo in tipos_documento %}
+                  <option value="{{ tipo.codigo }}">{{ tipo.codigo }} - {{ tipo.texto }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Número de Documento <span class="text-danger campo-obligatorio">*</span></label>
+                <input type="text" class="form-control" name="numDocumento" required>
+                <div class="form-text" id="formatoDocumento" style="display: none;">
+                  Formato: XXXXXXXX-X
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">NRC <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <input type="text" class="form-control" name="nrc">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Nombre <span class="text-danger campo-obligatorio">*</span></label>
+                <input type="text" class="form-control" name="nombre" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Código de Actividad Económica <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <select class="form-select" name="codActividad">
+                  <option value="">Seleccione...</option>
+                  {% for acti in actividades_economicas %}
+                  <option value="{{ acti.codigo }}">{{ acti.codigo }} - {{ acti.texto }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Descripción Actividad <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <input type="text" class="form-control" name="descActividad">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Departamento <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <select class="form-select" name="departamento" id="modalDepartamento">
+                  <option value="">Seleccione...</option>
+                  {% for depto in departamentos %}
+                  <option value="{{ depto.codigo }}">{{ depto.codigo }} - {{ depto.texto }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Municipio <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <select class="form-select" name="municipio" id="modalMunicipio">
+                  <option value="">Seleccione municipio...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="mb-3">
+                <label class="form-label">Dirección/Complemento <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <textarea class="form-control" name="complemento" rows="2"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Teléfono <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <input type="text" class="form-control" name="telefono">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Correo Electrónico <span class="text-danger campo-obligatorio" style="display: none;">*</span></label>
+                <input type="email" class="form-control" name="correo">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="guardarReceptor">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Buscar Receptor -->
+<div class="modal fade" id="buscarReceptorModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Buscar Receptor</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Tipo de Documento *</label>
+          <select class="form-select" id="modalBuscarTipoDocumento" required>
+            <option value="">Seleccione...</option>
+            {% for tipo in tipos_documento %}
+            <option value="{{ tipo.codigo }}">{{ tipo.codigo }} - {{ tipo.texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Número de Documento *</label>
+          <input type="text" class="form-control" id="modalBuscarNumDocumento" required>
+          <div class="form-text" id="formatoDocumentoBuscar" style="display: none;">
+            Formato: XXXXXXXX-X
+          </div>
+        </div>
+        <div id="receptorSearchResult"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="modalBuscarReceptorBtn">Buscar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Item -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Agregar Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="itemModalForm">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Código del Producto</label>
+                <div class="position-relative">
+                  <input type="text" class="form-control" id="buscarCodigoProducto"
+                    placeholder="Escriba código para buscar...">
+                  <div id="productoSuggestions" class="autocomplete-suggestions" style="display: none;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Tipo de Ítem</label>
+                <select class="form-select" id="itemTipoItem" name="itemTipoItem" required>
+                  <option value="">Seleccione...</option>
+                  {% for tipo in tipos_items %}
+                  <option value="{{ tipo.codigo }}" {% if tipo.codigo == '1' %}selected{% endif %}>
+                    {{ tipo.codigo }} - {{ tipo.texto }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Precio</label>
+                <select class="form-select" id="itemPrecio" disabled>
+                  <option value="">Seleccione producto primero</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Cantidad</label>
+                <input type="number" class="form-control" id="itemCantidad" step="0.01" min="0.01" value="1">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <input type="text" class="form-control" id="itemDescripcion" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Existencias</label>
+                <input type="number" class="form-control" id="itemExistencias" step="0.01" min="0" readonly>
+                <div class="form-text">
+                  <input type="checkbox" id="modificarExistencias"> Modificar existencias
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Precio Unitario{% if es_ccf %} (c/IVA){% endif %}</label>
+                <input type="number" class="form-control readonly-field" id="itemPrecioUni" step="0.01" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Descuento %</label>
+                <select class="form-select" id="itemDescuento">
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="10">10%</option>
+                  <option value="15">15%</option>
+                  <option value="20">20%</option>
+                  <option value="25">25%</option>
+                  <option value="30">30%</option>
+                  <option value="35">35%</option>
+                  <option value="40">40%</option>
+                  <option value="45">45%</option>
+                  <option value="50">50%</option>
+                  <option value="55">55%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Descuento $</label>
+                <input type="number" class="form-control readonly-field" id="itemMontoDesc" step="0.01" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Venta Gravada{% if es_ccf %} (s/IVA){% endif %}</label>
+                <input type="number" class="form-control readonly-field" id="itemVentaGravada" step="0.01" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">IVA (13%)</label>
+                <input type="number" class="form-control readonly-field" id="itemIVA" step="0.01" readonly>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label class="form-label">Total Item</label>
+                <input type="number" class="form-control readonly-field" id="itemTotal" step="0.01" readonly>
+              </div>
+            </div>
+          </div>
+          <input type="hidden" id="itemProductoId">
+          <input type="hidden" id="itemCodigo">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="agregarItem">Agregar Item</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Datos del servidor para JavaScript
+  const configFormulario = {
+    esCCF: {% if es_ccf %}true{% else %}false{% endif %},
+    tipoDte: '{{ tipo_dte }}'
+  };
+</script>
+<script>
+  // JavaScript actualizado para factura_form.html - Soporta FC y CCF
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('JS de factura cargado - Tipo:', configFormulario.tipoDte);
+
+    let receptorActual = null;
+    let itemsActuales = [];
+    let itemCounter = 0;
+    let productoSeleccionado = null;
+    const esCCF = configFormulario.esCCF;
+    const tipoDte = configFormulario.tipoDte;
+
+    // =============== FUNCIONES DE MUNICIPIOS ===============
+    function cargarMunicipios(departamentoCodigo, municipioSelectId, municipioSeleccionado = null) {
+      const municipioSelect = document.getElementById(municipioSelectId);
+
+      if (!departamentoCodigo) {
+        municipioSelect.innerHTML = '<option value="">Seleccione departamento primero</option>';
+        return;
+      }
+
+      municipioSelect.innerHTML = '<option value="">Cargando municipios...</option>';
+
+      fetch(`/dte/ajax/obtener-municipios-r/?departamento_codigo=${departamentoCodigo}`)
+        .then(response => response.json())
+        .then(data => {
+          municipioSelect.innerHTML = '<option value="">Seleccione municipio...</option>';
+
+          if (data.municipios && data.municipios.length > 0) {
+            data.municipios.forEach(municipio => {
+              const option = document.createElement('option');
+              option.value = municipio.codigo;
+              option.textContent = `${municipio.codigo} - ${municipio.texto}`;
+              municipioSelect.appendChild(option);
+            });
+
+            if (municipioSeleccionado) {
+              municipioSelect.value = municipioSeleccionado;
+            }
+          } else {
+            municipioSelect.innerHTML = '<option value="">No hay municipios disponibles</option>';
+          }
+        })
+        .catch(error => {
+          console.error('Error cargando municipios:', error);
+          municipioSelect.innerHTML = '<option value="">Error cargando municipios</option>';
+        });
+    }
+
+    // Event listeners para departamentos
+    document.getElementById('modalDepartamento').addEventListener('change', function () {
+      cargarMunicipios(this.value, 'modalMunicipio');
+    });
+
+    //document.getElementById('receptorDepartamento').addEventListener('change', function () {
+    //  cargarMunicipios(this.value, 'receptorMunicipio');
+    //});
+
+    // =============== VALIDACIONES ESPECÍFICAS PARA CCF ===============
+    if (esCCF) {
+      // Filtrar solo NIT en modales para CCF
+      const tipoDocSelects = document.querySelectorAll('select[name="tipoDocumento"]');
+      tipoDocSelects.forEach(select => {
+        if (select.hasAttribute('data-ccf-only')) {
+          // Ocultar opciones que no sean NIT
+          Array.from(select.options).forEach(option => {
+            if (option.value && option.value !== '36') {
+              option.style.display = 'none';
+            }
+          });
+          // Preseleccionar NIT si está disponible
+          if (select.querySelector('option[value="36"]')) {
+            select.value = '36';
+          }
+        }
+      });
+    }
+
+    // =============== RECEPTOR FUNCTIONS ===============
+    // Reemplazar el event listener de modalBuscarReceptorBtn
+    // Reemplazar el event listener de modalBuscarReceptorBtn
+    document.getElementById('modalBuscarReceptorBtn').addEventListener('click', function () {
+      debugResultDiv();
+        const tipoDoc = document.getElementById('modalBuscarTipoDocumento').value.trim();
+        const numero = document.getElementById('modalBuscarNumDocumento').value.trim();
+        const resultDiv = document.getElementById('receptorSearchResult');
+
+        // Limpiar resultados anteriores
+        resultDiv.innerHTML = '';
+
+        if (!tipoDoc || !numero) {
+            resultDiv.style.display = 'block';
+            resultDiv.style.visibility = 'visible';
+            resultDiv.innerHTML = '<div class="alert alert-warning mt-3"><i class="fas fa-exclamation-triangle me-2"></i>Por favor, complete ambos campos</div>';
+            return;
+        }
+
+        // Validación específica para CCF
+        if (esCCF && tipoDoc !== '36') {
+            resultDiv.style.display = 'block';
+            resultDiv.style.visibility = 'visible';
+            resultDiv.innerHTML = '<div class="alert alert-danger mt-3"><i class="fas fa-times-circle me-2"></i>Para Crédito Fiscal solo se permite NIT (tipo 36)</div>';
+            return;
+        }
+
+        // Validación de formato DUI
+        if (tipoDoc === '13' && !/^[0-9]{8}-[0-9]$/.test(numero)) {
+            resultDiv.style.display = 'block';
+            resultDiv.style.visibility = 'visible';
+            resultDiv.innerHTML = '<div class="alert alert-danger mt-3"><i class="fas fa-times-circle me-2"></i>Para DUI, el formato debe ser XXXXXXXX-X</div>';
+            return;
+        }
+
+        // Validación de formato NIT
+        if (tipoDoc === '36' && !/^(\d{9}|\d{14})$/.test(numero.replace(/\D/g, ''))) {
+            resultDiv.style.display = 'block';
+            resultDiv.style.visibility = 'visible';
+            resultDiv.innerHTML = '<div class="alert alert-danger mt-3"><i class="fas fa-times-circle me-2"></i>Para NIT, el número debe tener 9 o 14 dígitos</div>';
+            return;
+        }
+
+        // Mostrar indicador de carga
+        resultDiv.style.display = 'block';
+        resultDiv.style.visibility = 'visible';
+        resultDiv.innerHTML = '<div class="text-center mt-3"><i class="fas fa-spinner fa-spin me-2"></i>Buscando receptor...</div>';
+
+        // Realizar búsqueda
+        fetch(`/dte/buscar-receptores/?tipo_documento=${tipoDoc}&numero=${numero}&tipo_dte=${tipoDte}`)
+            .then(response => {
+                console.log('Respuesta recibida:', response.status, response.ok);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos recibidos:', data);
+                console.log('Array receptores:', data.receptores);
+                console.log('Longitud del array:', data.receptores ? data.receptores.length : 'undefined');
+                
+                // CORREGIDO: Verificación más robusta del array vacío
+                const receptores = data.receptores || [];
+                
+                if (receptores.length === 0) {
+                    console.log('Mostrando mensaje de no encontrado');
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.visibility = 'visible';
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="fas fa-search me-2"></i>Receptor no encontrado</h6>
+                            <p class="mb-2">No se encontró ningún receptor con los siguientes datos:</p>
+                            <ul class="mb-2">
+                                <li><strong>Tipo de Documento:</strong> ${tipoDoc}</li>
+                                <li><strong>Número de Documento:</strong> ${numero}</li>
+                            </ul>
+                            <p class="mb-0"><small class="text-muted">Puede crear un nuevo receptor usando el botón "Crear Receptor".</small></p>
+                        </div>
+                    `;
+                    
+                    // NUEVO: Verificar que el mensaje se insertó correctamente
+                    console.log('Contenido del div después de insertar mensaje:', resultDiv.innerHTML);
+                    
+                } else if (receptores.length === 1) {
+                    console.log('Un receptor encontrado');
+                    const receptor = receptores[0];
+                    if (esCCF && !receptor.completo_ccf) {
+                        resultDiv.style.display = 'block';
+                        resultDiv.style.visibility = 'visible';
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger mt-3">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Receptor incompleto para CCF</h6>
+                                <p class="mb-2">El receptor encontrado no tiene información completa para Crédito Fiscal.</p>
+                                <p class="mb-0">Use el botón "Editar Receptor" para completar los datos faltantes.</p>
+                            </div>
+                        `;
+                    } else {
+                      
+                        console.log('Seleccionando receptor directamente');
+                        seleccionarReceptorDirecto(receptor);
+                        bootstrap.Modal.getInstance(document.getElementById('buscarReceptorModal')).hide();
+                    }
+                } else {
+                    console.log('Múltiples receptores encontrados:', receptores.length);
+
+                    resultDiv.style.display = 'block';
+                    resultDiv.style.visibility = 'visible';
+                    // Múltiples resultados
+                    resultDiv.innerHTML = '<h6 class="mt-3">Seleccione un receptor:</h6>';
+                    const listGroup = document.createElement('div');
+                    listGroup.className = 'list-group mt-2';
+
+                    receptores.forEach((receptor, index) => {
+                        console.log(`Procesando receptor ${index + 1}:`, receptor);
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'list-group-item list-group-item-action';
+                        
+                        let estadoIndicator = '';
+                        if (esCCF) {
+                            estadoIndicator = receptor.completo_ccf 
+                                ? '<span class="badge bg-success ms-2">Completo CCF</span>'
+                                : '<span class="badge bg-warning ms-2">Incompleto CCF</span>';
+                        }
+
+                        button.innerHTML = `
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>${receptor.numDocumento}</strong> - ${receptor.nombre}
+                                    ${estadoIndicator}
+                                </div>
+                                <div>
+                                    <small>${receptor.tipoDocumento_descripcion || 'N/A'}</small>
+                                </div>
+                            </div>
+                            <small class="text-muted">${receptor.complemento || 'Sin dirección'}</small>
+                        `;
+
+                        button.addEventListener('click', function () {
+                            if (esCCF && !receptor.completo_ccf) {
+                                resultDiv.style.display = 'block';
+                                resultDiv.style.visibility = 'visible';
+                                resultDiv.innerHTML = `
+                                    <div class="alert alert-warning mt-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Este receptor no tiene información completa para CCF. Complete todos los campos requeridos.
+                                    </div>
+                                `;
+                                return;
+                            }
+                            seleccionarReceptorDirecto(receptor);
+                            bootstrap.Modal.getInstance(document.getElementById('buscarReceptorModal')).hide();
+                        });
+                        listGroup.appendChild(button);
+                    });
+
+                    resultDiv.appendChild(listGroup);
+                }
+            })
+            .catch(error => {
+                console.error('Error en búsqueda:', error);
+                resultDiv.style.display = 'block';
+                resultDiv.style.visibility = 'visible';
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger mt-3">
+                        <h6><i class="fas fa-exclamation-circle me-2"></i>Error en la búsqueda</h6>
+                        <p class="mb-2">Ocurrió un error al buscar el receptor:</p>
+                        <p class="mb-2"><code>${error.message}</code></p>
+                        <p class="mb-0">Por favor, intente nuevamente o verifique su conexión.</p>
+                    </div>
+                `;
+            });
+    });
+
+    // Agregar esta función de debug antes del event listener
+    function debugResultDiv() {
+        const resultDiv = document.getElementById('receptorSearchResult');
+        console.log('=== DEBUG RESULT DIV ===');
+        console.log('Div encontrado:', !!resultDiv);
+        console.log('Div visible:', resultDiv ? getComputedStyle(resultDiv).display !== 'none' : 'N/A');
+        console.log('Contenido actual:', resultDiv ? resultDiv.innerHTML : 'N/A');
+        console.log('Clases CSS:', resultDiv ? resultDiv.className : 'N/A');
+        console.log('Estilo inline:', resultDiv ? resultDiv.style.cssText : 'N/A');
+        console.log('======================');
+    }
+
+    function seleccionarReceptorDirecto(receptor) {
+      receptorActual = {
+        ...receptor,
+        departamento: receptor.departamento || '',
+        municipio: receptor.municipio || ''
+      };
+
+      mostrarReceptor(receptorActual);
+      document.getElementById('modalBuscarNumDocumento').value = '';
+      document.getElementById('modalBuscarTipoDocumento').value = '';
+      document.getElementById('receptorSearchResult').innerHTML = '';
+    }
+
+    document.getElementById('guardarReceptor').addEventListener('click', function () {
+      const form = document.getElementById('receptorModalForm');
+      
+      // Limpiar errores anteriores
+      mostrarErroresValidacion([]);
+      
+      // Validar formulario
+      const errores = validarFormularioReceptor(form);
+      
+      if (errores.length > 0) {
+        mostrarErroresValidacion(errores);
+        return;
+      }
+
+      const tipo = form.querySelector('select[name="tipoDocumento"]').value.trim();
+      const numero = form.querySelector('input[name="numDocumento"]').value.trim();
+      const nombre = form.querySelector('input[name="nombre"]').value.trim();
+
+      const receptor = {
+        id: receptorActual ? receptorActual.id : null,
+        tipoDocumento: tipo,
+        numDocumento: numero,
+        nrc: form.querySelector('input[name="nrc"]')?.value || '',
+        nombre: nombre,
+        codActividad: form.querySelector('select[name="codActividad"]')?.value || '',
+        descActividad: form.querySelector('input[name="descActividad"]')?.value || '',
+        departamento: form.querySelector('select[name="departamento"]')?.value || '',
+        municipio: form.querySelector('select[name="municipio"]')?.value || '',
+        complemento: form.querySelector('textarea[name="complemento"]')?.value || '',
+        telefono: form.querySelector('input[name="telefono"]')?.value || '',
+        correo: form.querySelector('input[name="correo"]')?.value || '',
+        modificado: true
+      };
+
+      receptorActual = receptor;
+      mostrarReceptor(receptor);
+
+      bootstrap.Modal.getInstance(document.getElementById('receptorModal')).hide();
+      form.reset();
+
+      console.log('Receptor guardado correctamente:', receptor);
+    });
+
+    // Reemplazar la función mostrarReceptor
+    function mostrarReceptor(receptor) {
+        document.getElementById('receptorForm').style.display = 'block';
+        document.getElementById('editarReceptor').style.display = 'inline-block';
+        document.getElementById('eliminarReceptor').style.display = 'inline-block';
+        actualizarFormularioReceptor(receptor);
+        
+        // NUEVO: Validar completitud y mostrar advertencia si es necesario
+        const camposFaltantes = validarCompleitudReceptor(receptor);
+        mostrarAdvertenciaCamposFaltantes(camposFaltantes);
+    }
+
+    // Reemplazar la función actualizarFormularioReceptor
+    function actualizarFormularioReceptor(receptor) {
+        const form = document.getElementById('receptorForm');
+
+        // Actualizar campos de texto directos
+        const camposTexto = {
+          'numDocumento': receptor.numDocumento || '',
+          'nrc': receptor.nrc || '',
+          'nombre': receptor.nombre || '',
+          'descActividad': receptor.descActividad || '',
+          'telefono': receptor.telefono || '',
+          'correo': receptor.correo || '',
+          'complemento': receptor.complemento || ''
+        };
+
+        Object.keys(camposTexto).forEach(campo => {
+          const elemento = form.querySelector(`[name="${campo}"]`);
+          if (elemento) {
+            elemento.value = camposTexto[campo];
+          }
+        });
+
+        // Tipo de documento - CORREGIDO para mostrar texto completo
+        const tipoDocDisplay = form.querySelector('[name="tipoDocumentoDisplay"]');
+        const tipoDocHidden = form.querySelector('[name="tipoDocumento"]');
+        if (tipoDocDisplay && tipoDocHidden) {
+          let tipoTexto = '';
+          if (receptor.tipoDocumento) {
+            // Buscar el texto en los options del select original
+            const selectOriginal = document.querySelector('#receptorModalForm select[name="tipoDocumento"]');
+            const option = selectOriginal?.querySelector(`option[value="${receptor.tipoDocumento}"]`);
+            tipoTexto = option ? option.textContent : `${receptor.tipoDocumento} - ${receptor.tipoDocumento_descripcion || ''}`;
+          }
+          tipoDocDisplay.value = tipoTexto;
+          tipoDocHidden.value = receptor.tipoDocumento || '';
+        }
+
+        // Código de actividad - CORREGIDO para mostrar texto completo
+        const codActDisplay = form.querySelector('[name="codActividadDisplay"]');
+        const codActHidden = form.querySelector('[name="codActividad"]');
+        if (codActDisplay && codActHidden) {
+          let actTexto = '';
+          if (receptor.codActividad) {
+            // Buscar el texto en los options del select original
+            const selectOriginal = document.querySelector('#receptorModalForm select[name="codActividad"]');
+            const option = selectOriginal?.querySelector(`option[value="${receptor.codActividad}"]`);
+            actTexto = option ? option.textContent : `${receptor.codActividad} - ${receptor.descActividad || ''}`;
+          }
+          codActDisplay.value = actTexto;
+          codActHidden.value = receptor.codActividad || '';
+        }
+
+        // Departamento - CORREGIDO para mostrar texto completo
+        const deptoDisplay = form.querySelector('[name="departamentoDisplay"]');
+        const deptoHidden = form.querySelector('[name="departamento"]');
+        if (deptoDisplay && deptoHidden) {
+          let deptoTexto = '';
+          if (receptor.departamento) {
+            // Buscar el texto en los options del select original
+            const selectOriginal = document.querySelector('#receptorModalForm select[name="departamento"]');
+            const option = selectOriginal?.querySelector(`option[value="${receptor.departamento}"]`);
+            deptoTexto = option ? option.textContent : `${receptor.departamento} - ${receptor.departamento_nombre || ''}`;
+          }
+          deptoDisplay.value = deptoTexto;
+          deptoHidden.value = receptor.departamento || '';
+        }
+
+        // Municipio - CORREGIDO para mostrar texto completo
+        const muniDisplay = form.querySelector('[name="municipioDisplay"]');
+        const muniHidden = form.querySelector('[name="municipio"]');
+        if (muniDisplay && muniHidden) {
+          let muniTexto = '';
+          if (receptor.municipio) {
+            // Buscar el texto en los options del select original
+            const selectOriginal = document.querySelector('#receptorModalForm select[name="municipio"]');
+            const option = selectOriginal?.querySelector(`option[value="${receptor.municipio}"]`);
+            muniTexto = option ? option.textContent : `${receptor.municipio} - ${receptor.municipio_nombre || ''}`;
+          }
+          muniDisplay.value = muniTexto;
+          muniHidden.value = receptor.municipio || '';
+        }
+    }
+
+    
+
+    // Reemplazar el event listener de editarReceptor
+    // Reemplazar el event listener de editarReceptor
+    // Reemplazar completamente el event listener de editarReceptor
+    // Reemplazar completamente el event listener de editarReceptor
+    document.getElementById('editarReceptor').addEventListener('click', function () {
+        debugReceptorActual();
+        
+        if (receptorActual) {
+            // Primero mostrar el modal
+            document.querySelector('#receptorModal .modal-title').textContent = 'Editar Receptor';
+            const modal = new bootstrap.Modal(document.getElementById('receptorModal'));
+            modal.show();
+            
+            // Esperar a que el modal se abra completamente
+            setTimeout(() => {
+                const form = document.getElementById('receptorModalForm');
+                
+                // Limpiar formulario primero
+                form.reset();
+
+                // CRÍTICO: Establecer tipo de documento PRIMERO
+                const tipoDocSelect = form.querySelector('select[name="tipoDocumento"]');
+                if (tipoDocSelect && receptorActual.tipoDocumento) {
+                    tipoDocSelect.value = receptorActual.tipoDocumento;
+                    console.log('Tipo de documento establecido:', receptorActual.tipoDocumento);
+                    
+                    // Disparar evento change para configurar máscara si es necesario
+                    const changeEvent = new Event('change', { bubbles: true });
+                    tipoDocSelect.dispatchEvent(changeEvent);
+                }
+
+                // ESPERAR un poco más para que se configure la máscara antes de llenar número
+                setTimeout(() => {
+                    // Llenar número de documento DESPUÉS de configurar tipo
+                    const numDocInput = form.querySelector('input[name="numDocumento"]');
+                    if (numDocInput && receptorActual.numDocumento) {
+                        numDocInput.value = receptorActual.numDocumento;
+                        console.log('Número de documento establecido:', receptorActual.numDocumento);
+                    }
+
+                    // Resto de campos básicos
+                    const camposBasicos = ['nrc', 'nombre', 'descActividad', 'telefono', 'correo', 'complemento'];
+                    camposBasicos.forEach(campo => {
+                        const input = form.querySelector(`[name="${campo}"]`);
+                        if (input && receptorActual[campo]) {
+                            input.value = receptorActual[campo];
+                        }
+                    });
+
+                    // Departamento
+                    const departamentoSelect = form.querySelector('select[name="departamento"]');
+                    if (departamentoSelect && receptorActual.departamento) {
+                        departamentoSelect.value = receptorActual.departamento;
+                        console.log('Departamento establecido:', receptorActual.departamento);
+                    }
+
+                    // Cargar municipios
+                    if (receptorActual.departamento) {
+                        cargarMunicipios(receptorActual.departamento, 'modalMunicipio', receptorActual.municipio);
+                    }
+
+                    // Tom Select para código de actividad
+                    if (tomSelectInstance && receptorActual.codActividad) {
+                        setTimeout(() => {
+                            setTomSelectValue(receptorActual.codActividad);
+                            console.log('Código de actividad establecido:', receptorActual.codActividad);
+                        }, 100);
+                    }
+                    
+                }, 200); // Esperar después de configurar tipo de documento
+                
+            }, 300); // Esperar a que el modal se abra
+        }
+    });
+
+    document.getElementById('eliminarReceptor').addEventListener('click', function () {
+      if (confirm('¿Está seguro de eliminar el receptor actual? Se perderán los datos no guardados.')) {
+        receptorActual = null;
+        document.getElementById('receptorForm').style.display = 'none';
+        document.getElementById('editarReceptor').style.display = 'none';
+        document.getElementById('eliminarReceptor').style.display = 'none';
+
+        const form = document.getElementById('receptorForm');
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+          input.value = '';
+          if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+          }
+        });
+
+        const modalForm = document.getElementById('receptorModalForm');
+        modalForm.reset();
+
+        document.getElementById('modalBuscarTipoDocumento').value = '';
+        document.getElementById('modalBuscarNumDocumento').value = '';
+        document.getElementById('receptorSearchResult').innerHTML = '';
+
+        document.querySelector('#receptorModal .modal-title').textContent = 'Crear Receptor';
+
+        console.log('Receptor eliminado - Estado inicial restaurado');
+      }
+    });
+
+    // =============== PRODUCTO/ITEM FUNCTIONS ===============
+    let productoTimeout;
+    document.getElementById('buscarCodigoProducto').addEventListener('input', function () {
+      clearTimeout(productoTimeout);
+      const codigo = this.value.trim();
+
+      if (codigo.length < 1) {
+        document.getElementById('productoSuggestions').style.display = 'none';
+        return;
+      }
+
+      productoTimeout = setTimeout(() => {
+        fetch(`/dte/buscar-productos/?codigo=${codigo}`)
+          .then(response => response.json())
+          .then(data => {
+            const suggestions = document.getElementById('productoSuggestions');
+            suggestions.innerHTML = '';
+
+            if (data.productos.length > 0) {
+              const productosLimitados = data.productos.slice(0, 8);
+
+              productosLimitados.forEach(producto => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-suggestion';
+                div.innerHTML = `
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <strong>${producto.codigo}</strong> - ${producto.nombre}
+                      <br><small class="text-muted">${producto.descripcion}</small>
+                    </div>
+                    <small class="badge bg-info">Stock: ${producto.existencias}</small>
+                  </div>
+                `;
+                div.addEventListener('click', () => {
+                  seleccionarProducto(producto.id);
+                  suggestions.style.display = 'none';
+                });
+                suggestions.appendChild(div);
+              });
+
+              if (data.productos.length > 8) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'autocomplete-suggestion text-center text-muted';
+                moreDiv.innerHTML = `<small>... y ${data.productos.length - 8} más. Refine su búsqueda.</small>`;
+                suggestions.appendChild(moreDiv);
+              }
+
+              suggestions.style.display = 'block';
+            } else {
+              const noResultDiv = document.createElement('div');
+              noResultDiv.className = 'autocomplete-suggestion text-center text-muted';
+              noResultDiv.innerHTML = '<small>No se encontraron productos</small>';
+              suggestions.appendChild(noResultDiv);
+              suggestions.style.display = 'block';
+            }
+          })
+          .catch(error => {
+            console.error('Error buscando productos:', error);
+            document.getElementById('productoSuggestions').style.display = 'none';
+          });
+      }, 300);
+    });
+
+    function seleccionarProducto(productoId) {
+    fetch(`/dte/producto/${productoId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const producto = data.producto;
+                productoSeleccionado = producto;
+
+                document.getElementById('itemProductoId').value = producto.id;
+                document.getElementById('itemCodigo').value = producto.codigo1;
+                document.getElementById('itemDescripcion').value = producto.descripcion;
+                document.getElementById('buscarCodigoProducto').value = producto.codigo1;
+                document.getElementById('itemDescuento').value = producto.descuento_por_defecto;
+                
+                // NUEVO: Cargar existencias
+                document.getElementById('itemExistencias').value = producto.existencias;
+                document.getElementById('modificarExistencias').checked = false;
+                document.getElementById('itemExistencias').readOnly = true;
+
+                actualizarSelectorPrecios(producto);
+                actualizarPrecioItem();
+                calcularTotalesItem();
+            }
+        });
+}
+
+    function validarExistencias() {
+      const cantidad = parseFloat(document.getElementById('itemCantidad').value) || 0;
+      const existencias = parseFloat(document.getElementById('itemExistencias').value) || 0;
+      
+      if (cantidad > existencias) {
+        return {
+          valido: false,
+          mensaje: `No hay suficiente stock. Solicitado: ${cantidad}, Disponible: ${existencias}`
+        };
+      }
+      
+      return { valido: true };
+    }
+
+    function actualizarSelectorPrecios(producto) {
+      const precioSelect = document.getElementById('itemPrecio');
+      precioSelect.innerHTML = '';
+
+      const precios = [];
+      if (producto.precio1) precios.push({ indice: 1, texto: `Precio 1: ${parseFloat(producto.precio1).toFixed(2)}` });
+      if (producto.precio2) precios.push({ indice: 2, texto: `Precio 2: ${parseFloat(producto.precio2).toFixed(2)}` });
+      if (producto.precio3) precios.push({ indice: 3, texto: `Precio 3: ${parseFloat(producto.precio3).toFixed(2)}` });
+      if (producto.precio4) precios.push({ indice: 4, texto: `Precio 4: ${parseFloat(producto.precio4).toFixed(2)}` });
+
+      if (precios.length === 0) {
+        precioSelect.innerHTML = '<option value="">Sin precios disponibles</option>';
+        precioSelect.disabled = true;
+        return;
+      }
+
+      precios.forEach(precio => {
+        const option = document.createElement('option');
+        option.value = precio.indice;
+        option.textContent = precio.texto;
+        precioSelect.appendChild(option);
+      });
+
+      precioSelect.value = precios[0].indice;
+      precioSelect.disabled = false;
+    }
+
+    function actualizarPrecioItem() {
+    if (!productoSeleccionado) return;
+
+    const precioIdx = document.getElementById('itemPrecio').value;
+    let precio = 0;
+
+    // SIEMPRE obtener el precio original del producto, no del input
+    switch (precioIdx) {
+        case '1': precio = productoSeleccionado.precio1; break;
+        case '2': precio = productoSeleccionado.precio2 || productoSeleccionado.precio1; break;
+        case '3': precio = productoSeleccionado.precio3 || productoSeleccionado.precio1; break;
+        case '4': precio = productoSeleccionado.precio4 || productoSeleccionado.precio1; break;
+        default: precio = productoSeleccionado.precio1;
+    }
+
+    // ACTUALIZAR el input con el precio original (sin descuento)
+    document.getElementById('itemPrecioUni').value = parseFloat(precio).toFixed(2);
+    calcularTotalesItem();
+}
+
+    // NUEVAS FUNCIONES PARA MANEJAR EXISTENCIAS
+    function validarCantidadVsExistencias() {
+      const cantidad = parseFloat(document.getElementById('itemCantidad').value) || 0;
+      const existencias = parseFloat(document.getElementById('itemExistencias').value) || 0;
+      const cantidadInput = document.getElementById('itemCantidad');
+      
+      // Limpiar clases anteriores
+      cantidadInput.classList.remove('stock-warning', 'stock-error', 'stock-ok');
+      cantidadInput.style.borderColor = '';
+      cantidadInput.style.backgroundColor = '';
+      cantidadInput.title = '';
+      
+      if (cantidad > existencias) {
+        cantidadInput.classList.add('stock-error');
+        cantidadInput.title = `No hay suficiente stock. Solicitado: ${cantidad}, Disponible: ${existencias}`;
+      } else if (cantidad > existencias * 0.8) {
+        cantidadInput.classList.add('stock-warning');
+        cantidadInput.title = `Advertencia: Quedará poco stock. Solicitado: ${cantidad}, Disponible: ${existencias}`;
+      } else if (cantidad > 0) {
+        cantidadInput.classList.add('stock-ok');
+        cantidadInput.title = `Stock suficiente. Disponible: ${existencias}`;
+      }
+    }
+
+    function mostrarMensajeExistencias(mensaje, tipo) {
+      const existenciasInput = document.getElementById('itemExistencias');
+      
+      // Remover mensaje anterior si existe
+      const mensajeAnterior = existenciasInput.parentNode.querySelector('.mensaje-existencias');
+      if (mensajeAnterior) {
+        mensajeAnterior.remove();
+      }
+      
+      // Crear nuevo mensaje
+      const mensajeDiv = document.createElement('div');
+      mensajeDiv.className = `mensaje-existencias alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show mt-2`;
+      mensajeDiv.style.fontSize = '12px';
+      mensajeDiv.style.padding = '8px 12px';
+      mensajeDiv.innerHTML = `
+        <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${mensaje}
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+      `;
+      
+      // Insertar después del input de existencias
+      existenciasInput.parentNode.appendChild(mensajeDiv);
+      
+      // Remover mensaje después de 3 segundos
+      setTimeout(() => {
+        if (mensajeDiv.parentNode) {
+          mensajeDiv.remove();
+        }
+      }, 3000);
+    }
+
+   function calcularTotalesItem() {
+    const cantidad = parseFloat(document.getElementById('itemCantidad').value) || 0;
+    const precioUni = parseFloat(document.getElementById('itemPrecioUni').value) || 0; // Este es siempre el precio original
+    const descuentoPct = parseFloat(document.getElementById('itemDescuento').value) || 0;
+
+    // Validar existencias visualmente
+    validarCantidadVsExistencias();
+
+    if (esCCF) {
+        // Para CCF: El precio viene con IVA incluido, calcular con máxima precisión
+        const precioConIva = precioUni;
+        
+        // Calcular precio sin IVA con máxima precisión (sin redondear prematuramente)
+        const precioSinIva = precioConIva / 1.13;
+        const subtotalSinIva = cantidad * precioSinIva;
+        const descuentoAbs = subtotalSinIva * (descuentoPct / 100);
+        const ventaGravada = subtotalSinIva - descuentoAbs;
+        
+        // IVA calculado sobre venta gravada
+        const iva = ventaGravada * 0.13;
+        const total = ventaGravada + iva; // Para CCF sí se suma IVA
+
+        // Mostrar valores calculados (redondeados solo para visualización)
+        document.getElementById('itemMontoDesc').value = descuentoAbs.toFixed(2);
+        document.getElementById('itemVentaGravada').value = ventaGravada.toFixed(2);
+        document.getElementById('itemIVA').value = iva.toFixed(2);
+        document.getElementById('itemTotal').value = total.toFixed(2);
+        
+        // Mostrar información del precio para CCF
+        const precioDisplay = document.getElementById('itemPrecioUni');
+        if (precioDisplay && descuentoPct > 0) {
+            const precioConDescuento = precioConIva * (1 - descuentoPct / 100);
+            precioDisplay.title = `Precio original: ${precioConIva.toFixed(2)} | Con descuento ${descuentoPct}%: ${precioConDescuento.toFixed(2)}`;
+        }
+        
+    } else if (tipoDte === '14') {
+        // Para FSE: precio viene CON IVA, pero necesitamos trabajar SIN IVA
+        const precioConIva = precioUni;
+        
+        // Aplicar descuento al precio CON IVA primero
+        const precioConIvaYDescuento = precioConIva * (1 - descuentoPct / 100);
+        
+        // Luego extraer precio sin IVA
+        const precioSinIvaConDescuento = precioConIvaYDescuento / 1.13;
+        const subtotalSinIva = cantidad * precioSinIvaConDescuento;
+        const compra = subtotalSinIva; // Para FSE es "compra", sin descuento adicional
+
+        document.getElementById('itemMontoDesc').value = '0.00'; // FSE no muestra descuento separado
+        document.getElementById('itemVentaGravada').value = compra.toFixed(2); // Reutilizar como 'compra'
+        document.getElementById('itemIVA').value = '0.00'; // FSE no tiene IVA
+        document.getElementById('itemTotal').value = compra.toFixed(2);
+        
+        // Mostrar información del precio para FSE
+        const precioDisplay = document.getElementById('itemPrecioUni');
+        if (precioDisplay && descuentoPct > 0) {
+            precioDisplay.title = `Precio original c/IVA: ${precioConIva.toFixed(2)} | Con descuento: ${precioConIvaYDescuento.toFixed(2)} | Sin IVA: ${precioSinIvaConDescuento.toFixed(2)}`;
+        }
+        
+    } else {
+        // Para Factura: precio con IVA, aplicar descuento
+        const precioConDescuento = precioUni * (1 - descuentoPct / 100);
+        const subtotal = cantidad * precioConDescuento;
+        const ventaGravada = subtotal; // Ya tiene descuento aplicado
+        const iva = ventaGravada > 0 ? ((ventaGravada / 1.13) * 0.13) : 0;
+        const total = ventaGravada; // Para FC, total = ventaGravada
+
+        document.getElementById('itemMontoDesc').value = '0.00'; // FC no muestra descuento separado
+        document.getElementById('itemVentaGravada').value = ventaGravada.toFixed(2);
+        document.getElementById('itemIVA').value = iva.toFixed(2);
+        document.getElementById('itemTotal').value = total.toFixed(2);
+        
+        // Mostrar información del precio para FC
+        const precioDisplay = document.getElementById('itemPrecioUni');
+        if (precioDisplay && descuentoPct > 0) {
+            precioDisplay.title = `Precio original: ${precioUni.toFixed(2)} | Con descuento ${descuentoPct}%: ${precioConDescuento.toFixed(2)}`;
+        }
+    }
+}
+
+    document.getElementById('itemPrecio').addEventListener('change', actualizarPrecioItem);
+    document.getElementById('itemCantidad').addEventListener('input', function() {
+      validarCantidadVsExistencias();
+      calcularTotalesItem();
+    });
+    document.getElementById('itemDescuento').addEventListener('change', calcularTotalesItem);
+
+    // EVENT LISTENER PARA LIMPIAR MODAL AL ABRIRLO (SOLO SI NO ES EDICIÓN)
+    document.getElementById('itemModal').addEventListener('show.bs.modal', function () {
+      // Verificar si se está editando un item
+      const btnAgregar = document.getElementById('agregarItem');
+      const esEdicion = btnAgregar.hasAttribute('data-editing-id');
+      
+      // Solo limpiar si NO es edición
+      if (!esEdicion) {
+        // Limpiar el modal solo cuando se abra para agregar nuevo item
+        const form = document.getElementById('itemModalForm');
+        form.reset();
+        
+        document.getElementById('itemProductoId').value = '';
+        document.getElementById('itemCodigo').value = '';
+        document.getElementById('itemExistencias').value = '';
+        document.getElementById('modificarExistencias').checked = false;
+        document.getElementById('itemExistencias').readOnly = true;
+        
+        // Establecer valor por defecto para Tipo de Item
+        document.getElementById('itemTipoItem').value = '1';
+        
+        // Limpiar campo de búsqueda de productos
+        document.getElementById('buscarCodigoProducto').value = '';
+        
+        // Resetear estilos de validación de cantidad
+        const cantidadInput = document.getElementById('itemCantidad');
+        cantidadInput.style.borderColor = '';
+        cantidadInput.style.backgroundColor = '';
+        cantidadInput.title = '';
+        cantidadInput.classList.remove('stock-warning', 'stock-error', 'stock-ok');
+        
+        // Resetear estilos de existencias
+        const existenciasInput = document.getElementById('itemExistencias');
+        existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado', 'existencias-error');
+        existenciasInput.style.borderColor = '';
+        existenciasInput.style.backgroundColor = '';
+        
+        // Limpiar mensajes de existencias
+        const mensajeExistencias = existenciasInput.parentNode.querySelector('.mensaje-existencias');
+        if (mensajeExistencias) {
+          mensajeExistencias.remove();
+        }
+        
+        // Cancelar timeouts pendientes
+        clearTimeout(window.existenciasTimeout);
+        
+        // Resetear producto seleccionado
+        productoSeleccionado = null;
+
+        // Resetear selector de precios
+        const precioSelect = document.getElementById('itemPrecio');
+        precioSelect.innerHTML = '<option value="">Seleccione producto primero</option>';
+        precioSelect.disabled = true;
+
+        // Resetear botón
+        btnAgregar.textContent = 'Agregar Item';
+        btnAgregar.removeAttribute('data-editing-id');
+        
+        // Ocultar sugerencias de productos
+        const suggestions = document.getElementById('productoSuggestions');
+        if (suggestions) {
+          suggestions.style.display = 'none';
+        }
+      }
+      // Si es edición, no limpiar nada - los datos ya fueron cargados por editarItem()
+    });
+
+    document.getElementById('agregarItem').addEventListener('click', function () {
+      const productoId = document.getElementById('itemProductoId').value;
+      const cantidad = parseFloat(document.getElementById('itemCantidad').value);
+      const descripcion = document.getElementById('itemDescripcion').value;
+
+      if (!productoId || !cantidad || cantidad <= 0) {
+        alert('Debe seleccionar un producto y especificar una cantidad válida');
+        return;
+      }
+
+      // VALIDACIÓN DE EXISTENCIAS - Solo validar, no actualizar
+      const validacionExistencias = validarExistencias();
+      if (!validacionExistencias.valido) {
+        alert(validacionExistencias.mensaje);
+        return;
+      }
+
+      // CANCELAR cualquier actualización de existencias pendiente
+      clearTimeout(window.existenciasTimeout);
+
+      // Proceder directamente a agregar/actualizar item
+      const editingId = this.getAttribute('data-editing-id');
+      if (editingId) {
+        actualizarItemExistente(parseInt(editingId));
+      } else {
+        agregarNuevoItem();
+      }
+    });
+
+   function agregarNuevoItem() {
+    const tipoItemRaw = document.getElementById('itemTipoItem').value;
+    if (!tipoItemRaw) {
+        alert('Por favor seleccione un Tipo de Ítem');
+        return;
+    }
+
+    // VALIDACIÓN DE EXISTENCIAS
+    const validacionExistencias = validarExistencias();
+    if (!validacionExistencias.valido) {
+        alert(validacionExistencias.mensaje);
+        return;
+    }
+
+    const tipoItem = parseInt(document.getElementById('itemTipoItem').value, 10);
+    const precioUnitario = parseFloat(document.getElementById('itemPrecioUni').value) || 0;
+    const cantidad = parseFloat(document.getElementById('itemCantidad').value) || 0;
+    const descuentoPct = parseFloat(document.getElementById('itemDescuento').value) || 0;
+    
+    const existenciasActualizadas = parseFloat(document.getElementById('itemExistencias').value) || 0;
+
+    let ventaGravada, iva, montoDesc, precioParaAlmacenar, totalItem;
+
+    if (esCCF) {
+        // Para CCF: precio viene con IVA, calcular precio sin IVA con máxima precisión
+        const precioConIva = precioUnitario;
+        const precioSinIva = precioConIva / 1.13;
+        const subtotalSinIva = cantidad * precioSinIva;
+        montoDesc = subtotalSinIva * (descuentoPct / 100);
+        ventaGravada = subtotalSinIva - montoDesc;
+        iva = ventaGravada * 0.13;
+        precioParaAlmacenar = precioSinIva; // Almacenar precio sin IVA
+        totalItem = ventaGravada + iva; // Para CCF sí se suma IVA
+    } else if (tipoDte === '14') {
+        // Para FSE: precio viene CON IVA, extraer precio SIN IVA para almacenar
+        const precioConIva = precioUnitario;
+        const precioSinIva = precioConIva / 1.13; // Extraer precio sin IVA
+        const subtotalSinIva = cantidad * precioSinIva;
+        montoDesc = subtotalSinIva * (descuentoPct / 100);
+        ventaGravada = subtotalSinIva - montoDesc; // Para FSE es "compra" sin IVA
+        iva = 0; // FSE no tiene IVA
+        precioParaAlmacenar = precioSinIva; // Almacenar precio SIN IVA para FSE
+        totalItem = ventaGravada; // Total = compra sin IVA
+    } else {
+        // Para Factura: precio con IVA incluido
+        const subtotal = cantidad * precioUnitario;
+        montoDesc = subtotal * (descuentoPct / 100);
+        ventaGravada = subtotal - montoDesc;
+        iva = ventaGravada > 0 ? ((ventaGravada / 1.13) * 0.13) : 0;
+        precioParaAlmacenar = precioUnitario; // Precio con IVA
+        totalItem = ventaGravada; // Para FC, total = ventaGravada
+    }
+
+    const item = {
+        id: itemCounter++,
+        productoId: document.getElementById('itemProductoId').value,
+        codigo: document.getElementById('itemCodigo').value,
+        descripcion: document.getElementById('itemDescripcion').value,
+        tipoItem: tipoItem,
+        cantidad: cantidad,
+        precioUni: precioParaAlmacenar,
+        precioOriginal: precioUnitario,
+        descuentoPct: descuentoPct,
+        descuentoAplicado: descuentoPct, // Para NC
+        montoDesc: montoDesc,
+        ventaGravada: ventaGravada,
+        tributos: null,
+        iva: esCCF ? 0.0 : iva, // Para CCF, ivaItem debe ser 0
+        ivaCalculado: iva,
+        psv: 0.0,
+        noGravado: 0.0,
+        total: totalItem,
+        precioIdx: parseInt(document.getElementById('itemPrecio').value, 10),
+        uniMedida: (tipoItem === 4) ? 99 : 59,
+        ventaNoSuj: 0.0,
+        ventaExenta: 0.0,
+        existenciasUsadas: existenciasActualizadas
+    };
+
+    itemsActuales.push(item);
+    actualizarTablaItems();
+    calcularTotalesFactura();
+    limpiarModalItem();
+}
+
+    function actualizarItemExistente(itemId) {
+    const itemIndex = itemsActuales.findIndex(i => i.id === itemId);
+    if (itemIndex === -1) return;
+    
+    const tipoItemRaw = document.getElementById('itemTipoItem').value;
+    if (!tipoItemRaw) {
+        alert('Por favor seleccione un Tipo de Ítem');
+        return;
+    }
+
+    const tipoItem = parseInt(document.getElementById('itemTipoItem').value, 10);
+    const precioUnitario = parseFloat(document.getElementById('itemPrecioUni').value) || 0;
+    const cantidad = parseFloat(document.getElementById('itemCantidad').value) || 0;
+    const descuentoPct = parseFloat(document.getElementById('itemDescuento').value) || 0;
+
+    let ventaGravada, iva, montoDesc, precioParaAlmacenar, totalItem;
+
+    if (esCCF) {
+        // Para CCF: precio viene con IVA, calcular precio sin IVA
+        const precioConIva = precioUnitario;
+        const precioSinIva = precioConIva / 1.13;
+        const subtotalSinIva = cantidad * precioSinIva;
+        montoDesc = subtotalSinIva * (descuentoPct / 100);
+        ventaGravada = subtotalSinIva - montoDesc;
+        iva = ventaGravada * 0.13;
+        precioParaAlmacenar = precioSinIva;
+        totalItem = ventaGravada + iva;
+    } else if (tipoDte === '14') {
+        // Para FSE: precio viene CON IVA, extraer precio SIN IVA
+        const precioConIva = precioUnitario;
+        const precioSinIva = precioConIva / 1.13;
+        const subtotalSinIva = cantidad * precioSinIva;
+        montoDesc = subtotalSinIva * (descuentoPct / 100);
+        ventaGravada = subtotalSinIva - montoDesc;
+        iva = 0;
+        precioParaAlmacenar = precioSinIva; // Almacenar precio SIN IVA
+        totalItem = ventaGravada;
+    } else {
+        // Para Factura: precio con IVA incluido
+        const subtotal = cantidad * precioUnitario;
+        montoDesc = subtotal * (descuentoPct / 100);
+        ventaGravada = subtotal - montoDesc;
+        iva = ventaGravada > 0 ? ((ventaGravada / 1.13) * 0.13) : 0;
+        precioParaAlmacenar = precioUnitario;
+        totalItem = ventaGravada;
+    }
+
+    itemsActuales[itemIndex] = {
+        ...itemsActuales[itemIndex],
+        tipoItem: tipoItem,
+        cantidad: cantidad,
+        precioUni: precioParaAlmacenar,
+        precioOriginal: precioUnitario,
+        descuentoPct: descuentoPct,
+        descuentoAplicado: descuentoPct, // Para NC
+        montoDesc: montoDesc,
+        ventaGravada: ventaGravada,
+        tributos: null,
+        iva: esCCF ? 0.0 : iva,
+        ivaCalculado: iva,
+        psv: 0.0,
+        noGravado: 0.0,
+        total: totalItem,
+        precioIdx: parseInt(document.getElementById('itemPrecio').value, 10),
+        uniMedida: (tipoItem === 4) ? 99 : 59,
+    };
+
+    actualizarTablaItems();
+    calcularTotalesFactura();
+    limpiarModalItem();
+}
+
+    function limpiarModalItem() {
+      document.getElementById('itemModalForm').reset();
+      document.getElementById('itemProductoId').value = '';
+      document.getElementById('itemCodigo').value = '';
+      document.getElementById('itemExistencias').value = '';
+      document.getElementById('modificarExistencias').checked = false;
+      document.getElementById('itemExistencias').readOnly = true;
+      
+      // Establecer valor por defecto para Tipo de Item
+      document.getElementById('itemTipoItem').value = '1'; // Bien por defecto
+      
+      // NUEVO: Limpiar campo de búsqueda de productos
+      document.getElementById('buscarCodigoProducto').value = '';
+      
+      // NUEVO: Resetear estilos de validación de cantidad
+      const cantidadInput = document.getElementById('itemCantidad');
+      cantidadInput.style.borderColor = '';
+      cantidadInput.style.backgroundColor = '';
+      cantidadInput.title = '';
+      cantidadInput.classList.remove('stock-warning', 'stock-error', 'stock-ok');
+      
+      // NUEVO: Resetear estilos de existencias
+      const existenciasInput = document.getElementById('itemExistencias');
+      existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado', 'existencias-error');
+      existenciasInput.style.borderColor = '';
+      existenciasInput.style.backgroundColor = '';
+      
+      // NUEVO: Limpiar mensajes de existencias
+      const mensajeExistencias = existenciasInput.parentNode.querySelector('.mensaje-existencias');
+      if (mensajeExistencias) {
+        mensajeExistencias.remove();
+      }
+      
+      productoSeleccionado = null;
+
+      const precioSelect = document.getElementById('itemPrecio');
+      precioSelect.innerHTML = '<option value="">Seleccione producto primero</option>';
+      precioSelect.disabled = true;
+
+      const btnAgregar = document.getElementById('agregarItem');
+      btnAgregar.textContent = 'Agregar Item';
+      btnAgregar.removeAttribute('data-editing-id');
+
+      bootstrap.Modal.getInstance(document.getElementById('itemModal')).hide();
+    }
+
+    function actualizarTablaItems() {
+      const container = document.getElementById('itemsContainer');
+
+      if (itemsActuales.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay items agregados</p>';
+        return;
+      }
+
+      // Encabezados diferentes según tipo de documento
+      const encabezadosFC = `
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Cant.</th>
+        <th>Precio</th>
+        <th>Desc.</th>
+        <th>Subtotal</th>
+        <th>IVA</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      `;
+      
+      const encabezadosCCF = `
+        <th>Código</th>
+        <th>Descripción</th>
+        <th>Cant.</th>
+        <th>Precio s/IVA</th>
+        <th>Desc.</th>
+        <th>Subtotal s/IVA</th>
+        <th>IVA (13%)</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      `;
+
+      let html = `
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                ${esCCF ? encabezadosCCF : encabezadosFC}
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      itemsActuales.forEach(item => {
+        const precioMostrar = esCCF 
+          ? item.precioUni.toFixed(2) // Precio sin IVA para CCF
+          : item.precioUni.toFixed(2); // Precio original para FC
+          
+        const ivaMostrar = esCCF 
+          ? item.ivaCalculado.toFixed(2) // IVA calculado para CCF
+          : item.iva.toFixed(2); // IVA del item para FC
+          
+        html += `
+          <tr>
+            <td>${item.codigo}</td>
+            <td>
+              ${item.descripcion}
+              ${esCCF ? `<br><small class="text-muted">Precio c/IVA: ${item.precioOriginal.toFixed(2)}</small>` : ''}
+            </td>
+            <td>${item.cantidad}</td>
+            <td>${precioMostrar}</td>
+            <td>${item.descuentoPct}%</td>
+            <td>${item.ventaGravada.toFixed(2)}</td>
+            <td>${ivaMostrar}</td>
+            <td>${item.total.toFixed(2)}</td>
+            <td>
+              <button type="button" class="btn btn-sm btn-warning" onclick="editarItem(${item.id})">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-danger" onclick="eliminarItem(${item.id})">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    window.eliminarItem = function (itemId) {
+      if (confirm('¿Está seguro de eliminar este item?')) {
+        itemsActuales = itemsActuales.filter(item => item.id !== itemId);
+        actualizarTablaItems();
+        calcularTotalesFactura();
+      }
+    };
+
+    window.editarItem = function (itemId) {
+      const item = itemsActuales.find(i => i.id === itemId);
+      if (item) {
+        fetch(`/dte/producto/${item.productoId}/`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              productoSeleccionado = data.producto;
+
+              document.getElementById('itemProductoId').value = item.productoId;
+              document.getElementById('itemCodigo').value = item.codigo;
+              document.getElementById('itemDescripcion').value = item.descripcion;
+              document.getElementById('buscarCodigoProducto').value = item.codigo;
+              document.getElementById('itemCantidad').value = item.cantidad;
+              document.getElementById('itemDescuento').value = item.descuentoPct;
+              document.getElementById('itemPrecioUni').value = item.precioUni.toFixed(2);
+              document.getElementById('itemTipoItem').value = item.tipoItem;
+              
+              // NUEVO: Cargar existencias del item editado
+              if (item.existenciasUsadas !== undefined) {
+                document.getElementById('itemExistencias').value = item.existenciasUsadas;
+                document.getElementById('modificarExistencias').checked = true;
+                document.getElementById('itemExistencias').readOnly = false;
+              } else {
+                document.getElementById('itemExistencias').value = data.producto.existencias;
+                document.getElementById('modificarExistencias').checked = false;
+                document.getElementById('itemExistencias').readOnly = true;
+              }
+
+              actualizarSelectorPrecios(data.producto);
+              document.getElementById('itemPrecio').value = item.precioIdx;
+
+              calcularTotalesItem();
+
+              const btnAgregar = document.getElementById('agregarItem');
+              btnAgregar.textContent = 'Actualizar Item';
+              btnAgregar.setAttribute('data-editing-id', itemId);
+
+              const modal = new bootstrap.Modal(document.getElementById('itemModal'));
+              modal.show();
+            }
+          });
+      }
+    };
+
+    function calcularTotalesFactura() {
+      // Usar precisión completa para cálculos acumulativos
+      let totalGravadoPreciso = 0;
+      let totalIVAPreciso = 0;
+      
+      itemsActuales.forEach(item => {
+          totalGravadoPreciso += parseFloat(item.ventaGravada);
+          
+          if (esCCF) {
+              // Para CCF: calcular IVA sobre el total acumulado
+              // (se calculará al final)
+          } else {
+              // Para Factura y FSE: sumar IVA de items
+              totalIVAPreciso += parseFloat(item.iva);
+          }
+      });
+      
+      if (esCCF) {
+          // Para CCF: IVA = 13% del total gravado (cálculo preciso)
+          totalIVAPreciso = totalGravadoPreciso * 0.13;
+      }
+      
+      // CORREGIDO: Cálculo de total a pagar según tipo de documento
+      let totalPagar;
+      if (esCCF) {
+          totalPagar = totalGravadoPreciso + totalIVAPreciso; // CCF: subtotal + IVA
+      } else {
+          totalPagar = totalGravadoPreciso; // FC y FSE: solo ventaGravada (ya incluye IVA)
+      }
+
+      // Mostrar valores con redondeo visual
+      document.getElementById('totalGravado').textContent = totalGravadoPreciso.toFixed(2);
+      document.getElementById('totalIVA').textContent = totalIVAPreciso.toFixed(2);
+      document.getElementById('totalPagar').textContent = totalPagar.toFixed(2);
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.position-relative')) {
+        const receptorDiv = document.getElementById('receptorSearchResult');
+        if (receptorDiv) receptorDiv.style.display = 'none';
+        const productoDiv = document.getElementById('productoSuggestions');
+        if (productoDiv) productoDiv.style.display = 'none';
+      }
+    });
+
+    // Reemplazar el event listener de hidden del modal
+    document.getElementById('receptorModal').addEventListener('hidden.bs.modal', function () {
+        // Restablecer título solo si no hay errores de validación
+        const hasErrors = document.getElementById('validationMessages').style.display !== 'none';
+        if (!hasErrors) {
+            document.querySelector('#receptorModal .modal-title').textContent = 'Crear Receptor';
+        }
+        
+        // Destruir Tom Select
+        if (tomSelectInstance) {
+            tomSelectInstance.destroy();
+            tomSelectInstance = null;
+        }
+    });
+
+    // =============== FORM SUBMISSION ===============
+    document.getElementById('facturaForm').addEventListener('submit', function (e) {
+      console.log('→ submit detectado', { receptorActual, itemsActuales, tipoDte });
+
+      if (!receptorActual) {
+        e.preventDefault();
+        alert('Debe seleccionar o crear un receptor');
+        return;
+      }
+
+      if (itemsActuales.length === 0) {
+        e.preventDefault();
+        alert('Debe agregar al menos un item');
+        return;
+      }
+
+      // Validaciones específicas para CCF
+      if (esCCF) {
+        const camposObligatorios = [
+          'tipoDocumento', 'numDocumento', 'nrc', 'nombre', 
+          'codActividad', 'descActividad', 'departamento', 
+          'municipio', 'complemento', 'telefono', 'correo'
+        ];
+
+        for (const campo of camposObligatorios) {
+          if (!receptorActual[campo] || !String(receptorActual[campo]).trim()) {
+            e.preventDefault();
+            alert(`Para CCF, el campo ${campo} del receptor es obligatorio`);
+            return;
+          }
+        }
+
+        // Validar que sea NIT
+        if (receptorActual.tipoDocumento !== '36') {
+          e.preventDefault();
+          alert('Para CCF, el receptor debe tener tipo documento NIT (36)');
+          return;
+        }
+
+        // Validar formato NIT
+        if (!/^(\d{9}|\d{14})$/.test(receptorActual.numDocumento)) {
+          e.preventDefault();
+          alert('Para CCF, el NIT debe tener 9 o 14 dígitos');
+          return;
+        }
+      }
+
+      // Crear campos ocultos para el receptor
+      const form = this;
+
+      // Limpiar campos anteriores del receptor
+      const oldReceptorInputs = form.querySelectorAll('input[name^="receptor_"]');
+      oldReceptorInputs.forEach(input => input.remove());
+
+      // Agregar datos del receptor actual
+      const receptorFields = {
+        'receptor_tipoDocumento': receptorActual.tipoDocumento,
+        'receptor_numDocumento': receptorActual.numDocumento,
+        'receptor_nrc': receptorActual.nrc || '',
+        'receptor_nombre': receptorActual.nombre,
+        'receptor_codActividad': receptorActual.codActividad || '',
+        'receptor_descActividad': receptorActual.descActividad || '',
+        'receptor_departamento': receptorActual.departamento || '',
+        'receptor_municipio': receptorActual.municipio || '',
+        'receptor_complemento': receptorActual.complemento || '',
+        'receptor_telefono': receptorActual.telefono || '',
+        'receptor_correo': receptorActual.correo || '',
+        'receptor_id': receptorActual.id || '',
+        'receptor_modificado': receptorActual.modificado || false,
+        'receptor_tipo_dte': tipoDte
+      };
+
+      Object.keys(receptorFields).forEach(fieldName => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = fieldName;
+        input.value = receptorFields[fieldName];
+        form.appendChild(input);
+      });
+
+      // Sincronizar ítems dinámicos con formset oculto
+      const totalForms = document.querySelector('input[name="cuerpo_documento-TOTAL_FORMS"]');
+      totalForms.value = itemsActuales.length;
+
+      const container = document.getElementById('itemFormset');
+      const firstForm = container.querySelector('.item-form');
+
+      // Eliminar formularios adicionales existentes
+      const forms = container.querySelectorAll('.item-form');
+      for (let i = 1; i < forms.length; i++) {
+        forms[i].remove();
+      }
+
+      // Actualizar primer formulario
+      if (firstForm && itemsActuales.length > 0) {
+        fillForm(firstForm, 0, itemsActuales[0]);
+
+        // Crear formularios adicionales si son necesarios
+        for (let i = 1; i < itemsActuales.length; i++) {
+          const newForm = firstForm.cloneNode(true);
+          updateFormIndex(newForm, i);
+          fillForm(newForm, i, itemsActuales[i]);
+          container.appendChild(newForm);
+        }
+      }
+    });
+
+    function updateFormIndex(form, index) {
+      const inputs = form.querySelectorAll('input, select, textarea');
+      inputs.forEach(input => {
+        if (input.name) {
+          input.name = input.name.replace(/cuerpo_documento-\d+-/, `cuerpo_documento-${index}-`);
+        }
+        if (input.id) {
+          input.id = input.id.replace(/cuerpo_documento-\d+-/, `cuerpo_documento-${index}-`);
+        }
+      });
+    }
+
+      function fillForm(form, index, item) {
+      const fields = {
+          'producto': item.productoId,
+          'precio_idx': item.precioIdx,
+          'descuento': item.descuentoPct,
+          'tipoItem': item.tipoItem,
+          'cantidad': item.cantidad,
+          'codigo': item.codigo,
+          'descripcion': item.descripcion,
+          'precioUni': item.precioUni,
+          'montoDescu': item.montoDesc,
+          'ventaGravada': item.ventaGravada,
+          'ivaItem': item.iva,
+          'uniMedida': item.uniMedida,
+          'ventaNoSuj': item.ventaNoSuj,
+          'ventaExenta': item.ventaExenta,
+          'psv': item.psv,
+          'noGravado': item.noGravado,
+          // NUEVO: Agregar estos campos para que lleguen al servidor
+          'descuentoAplicado': item.descuentoPct,
+          'precioIndiceUsado': item.precioIdx
+      };
+
+      const decimalFields = [
+          'precioUni', 'montoDescu', 'ventaGravada',
+          'ivaItem', 'ventaNoSuj', 'ventaExenta',
+          'psv', 'noGravado', 'descuentoAplicado'
+      ];
+
+      for (const [fieldName, value] of Object.entries(fields)) {
+          const input = form.querySelector(
+              `[name="cuerpo_documento-${index}-${fieldName}"]`
+          );
+          if (!input) continue;
+
+          if (decimalFields.includes(fieldName)) {
+              const num = parseFloat(value) || 0;
+              input.value = num.toFixed(2);
+          } else {
+              input.value = value;
+          }
+      }
+  }
+
+    document.getElementById('itemModal').addEventListener('hidden.bs.modal', function () {
+      const btnAgregar = document.getElementById('agregarItem');
+      btnAgregar.textContent = 'Agregar Item';
+      btnAgregar.removeAttribute('data-editing-id');
+    });
+
+    // =============== INICIALIZACIÓN ===============
+    console.log(`Formulario inicializado para ${esCCF ? 'CCF' : 'Factura'}`);
+    
+    // Si es CCF, mostrar advertencias adicionales
+    if (esCCF) {
+      console.log('Modo CCF activado - Validaciones estrictas habilitadas');
+    }
+
+    // EVENT LISTENERS PARA EXISTENCIAS
+    document.getElementById('modificarExistencias').addEventListener('change', function() {
+      const existenciasInput = document.getElementById('itemExistencias');
+      existenciasInput.readOnly = !this.checked;
+      
+      if (!this.checked && productoSeleccionado) {
+        // Restaurar valor original al desmarcar
+        existenciasInput.value = productoSeleccionado.existencias;
+        // Limpiar estilos
+        existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado', 'existencias-error');
+      } else if (this.checked) {
+        // Habilitar edición
+        existenciasInput.focus();
+      }
+    });
+
+    // ACTUALIZACIÓN EN TIEMPO REAL DE EXISTENCIAS
+    document.getElementById('itemExistencias').addEventListener('input', function() {
+      const modificarCheckbox = document.getElementById('modificarExistencias');
+      const existenciasInput = this;
+      
+      // NO ejecutar si el checkbox no está marcado o no hay producto seleccionado
+      if (!modificarCheckbox.checked || !productoSeleccionado) {
+        validarCantidadVsExistencias();
+        return;
+      }
+      
+      const nuevasExistencias = this.value.trim();
+      
+      // Validar que sea un número válido
+      if (!nuevasExistencias || isNaN(nuevasExistencias) || parseFloat(nuevasExistencias) < 0) {
+        existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado');
+        existenciasInput.classList.add('existencias-error');
+        return;
+      }
+      
+      // No hacer nada si el valor es igual al actual
+      if (parseFloat(nuevasExistencias) === productoSeleccionado.existencias) {
+        existenciasInput.classList.remove('existencias-modificando', 'existencias-error');
+        existenciasInput.classList.add('existencias-actualizado');
+        return;
+      }
+      
+      // Mostrar indicador de carga INMEDIATAMENTE
+      existenciasInput.classList.add('existencias-modificando');
+      existenciasInput.classList.remove('existencias-actualizado', 'existencias-error');
+      
+      // Usar debounce para evitar muchas peticiones
+      clearTimeout(window.existenciasTimeout);
+      window.existenciasTimeout = setTimeout(() => {
+        // Realizar petición AJAX
+        fetch('/dte/actualizar-existencias-producto/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          },
+          body: `producto_id=${productoSeleccionado.id}&existencias=${nuevasExistencias}`
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Éxito - actualizar UI INMEDIATAMENTE
+            existenciasInput.classList.remove('existencias-modificando', 'existencias-error');
+            existenciasInput.classList.add('existencias-actualizado');
+            
+            // MOSTRAR MENSAJE DE ÉXITO INMEDIATAMENTE
+            mostrarMensajeExistencias(data.mensaje, 'success');
+            
+            // Actualizar el valor de existencias en el objeto productoSeleccionado
+            productoSeleccionado.existencias = parseFloat(nuevasExistencias);
+            
+            // Revalidar cantidad vs nuevas existencias
+            validarCantidadVsExistencias();
+            
+            console.log(`✅ Existencias actualizadas para ${data.producto_nombre}: ${data.existencias_anteriores} → ${data.existencias_nuevas}`);
+            
+          } else {
+            // Error - mostrar mensaje INMEDIATAMENTE
+            existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado');
+            existenciasInput.classList.add('existencias-error');
+            mostrarMensajeExistencias('Error: ' + data.error, 'error');
+            console.error('Error actualizando existencias:', data.error);
+          }
+        })
+        .catch(error => {
+          // Error de red - mostrar mensaje INMEDIATAMENTE
+          existenciasInput.classList.remove('existencias-modificando', 'existencias-actualizado');
+          existenciasInput.classList.add('existencias-error');
+          mostrarMensajeExistencias('Error de conexión', 'error');
+          console.error('Error en petición AJAX:', error);
+        });
+      }, 500); // Esperar 500ms después de que deje de escribir
+    });
+
+        // Función para actualizar campos obligatorios según tipo de DTE
+    // Reemplazar la función actualizarCamposObligatorios
+    function actualizarCamposObligatorios() {
+        const asteriscos = document.querySelectorAll('.campo-obligatorio');
+        const inputs = document.querySelectorAll('#receptorModalForm input, #receptorModalForm select, #receptorModalForm textarea');
+        
+        // Resetear todos los campos
+        asteriscos.forEach(ast => ast.style.display = 'none');
+        inputs.forEach(input => input.removeAttribute('required'));
+        
+        if (esCCF) {
+            // CCF: Todos los campos obligatorios
+            asteriscos.forEach(ast => ast.style.display = 'inline');
+            inputs.forEach(input => {
+                if (input.name !== 'tipoDocumento') {
+                    input.setAttribute('required', 'required');
+                }
+            });
+        } else if (tipoDte === '14') {
+            // FSE: Todos excepto teléfono, codActividad, descActividad Y NRC
+            asteriscos.forEach(ast => {
+                const inputName = ast.closest('.mb-3').querySelector('input, select, textarea')?.name;
+                
+                if (inputName && !['telefono', 'codActividad', 'descActividad', 'nrc'].includes(inputName)) {
+                    ast.style.display = 'inline';
+                    const input = ast.closest('.mb-3').querySelector('input, select, textarea');
+                    if (input && input.name !== 'tipoDocumento') {
+                        input.setAttribute('required', 'required');
+                    }
+                }
+            });
+        } else {
+            // FC: Solo nombre, tipoDocumento, numDocumento, correo
+            const camposObligatoriosFC = ['nombre', 'tipoDocumento', 'numDocumento', 'correo'];
+            asteriscos.forEach(ast => {
+                const inputName = ast.closest('.mb-3').querySelector('input, select, textarea')?.name;
+                if (camposObligatoriosFC.includes(inputName)) {
+                    ast.style.display = 'inline';
+                    if (inputName !== 'tipoDocumento') {
+                        const input = ast.closest('.mb-3').querySelector('input, select, textarea');
+                        if (input) input.setAttribute('required', 'required');
+                    }
+                }
+            });
+        }
+    }
+
+    // Función para aplicar máscara de DUI
+    // Función para aplicar máscara de DUI - MEJORADA
+    // Función para aplicar máscara de DUI - SIMPLIFICADA
+    // Reemplazar la función aplicarMascaraDUI existente
+// Reemplazar la función aplicarMascaraDUI existente
+      // Actualizar la función aplicarMascaraDUI para que no interfiera con valores existentes
+    function aplicarMascaraDUI(input) {
+        // Limpiar cualquier event listener anterior
+        const nuevoInput = input.cloneNode(true);
+        input.parentNode.replaceChild(nuevoInput, input);
+        
+        // Aplicar máscara al nuevo input
+        nuevoInput.addEventListener('input', function(event) {
+            let value = event.target.value.replace(/\D/g, ''); // Solo números
+            
+            if (value.length > 9) {
+                value = value.substring(0, 9); // Máximo 9 dígitos
+            }
+            
+            if (value.length > 8) {
+                event.target.value = value.substring(0, 8) + '-' + value.substring(8);
+            } else {
+                event.target.value = value;
+            }
+        });
+        
+        // NUEVO: Agregar evento para preservar valores existentes válidos
+        nuevoInput.addEventListener('focus', function(event) {
+            const valor = event.target.value;
+            // Si ya tiene formato de DUI válido, no hacer nada
+            if (/^[0-9]{8}-[0-9]$/.test(valor)) {
+                console.log('DUI válido detectado, preservando:', valor);
+            }
+        });
+        
+        return nuevoInput;
+    }
+
+    // Función para validar formulario de receptor
+    function validarFormularioReceptor(form) {
+      const errores = [];
+      
+      const tipoDoc = form.querySelector('select[name="tipoDocumento"]').value.trim();
+      const numero = form.querySelector('input[name="numDocumento"]').value.trim();
+      const nombre = form.querySelector('input[name="nombre"]').value.trim();
+      const correo = form.querySelector('input[name="correo"]').value.trim();
+      const nrc = form.querySelector('input[name="nrc"]').value.trim();
+      const codActividad = form.querySelector('select[name="codActividad"]').value.trim();
+      const descActividad = form.querySelector('input[name="descActividad"]').value.trim();
+      const departamento = form.querySelector('select[name="departamento"]').value.trim();
+      const municipio = form.querySelector('select[name="municipio"]').value.trim();
+      const complemento = form.querySelector('textarea[name="complemento"]').value.trim();
+      const telefono = form.querySelector('input[name="telefono"]').value.trim();
+
+      // Validaciones básicas siempre
+      if (!tipoDoc) errores.push('Debe seleccionar un Tipo de Documento');
+      if (!numero) errores.push('Debe ingresar un Número de Documento');
+      if (!nombre) errores.push('Debe ingresar un Nombre');
+
+      // Validaciones específicas por tipo de DTE
+      if (esCCF) {
+        // CCF: Todos los campos obligatorios
+        if (!nrc) errores.push('NRC es obligatorio para CCF');
+        if (!correo) errores.push('Correo es obligatorio para CCF');
+        if (!codActividad) errores.push('Código de Actividad es obligatorio para CCF');
+        if (!descActividad) errores.push('Descripción de Actividad es obligatoria para CCF');
+        if (!departamento) errores.push('Departamento es obligatorio para CCF');
+        if (!municipio) errores.push('Municipio es obligatorio para CCF');
+        if (!complemento) errores.push('Dirección es obligatoria para CCF');
+        if (!telefono) errores.push('Teléfono es obligatorio para CCF');
+        
+        if (tipoDoc && tipoDoc !== '36') {
+          errores.push('Para CCF solo se permite NIT (tipo 36)');
+        }
+      } else if (tipoDte === '14') {
+        // FSE: Todos excepto teléfono, codActividad y descActividad
+        if (!correo) errores.push('Correo es obligatorio para FSE');
+        if (!departamento) errores.push('Departamento es obligatorio para FSE');
+        if (!municipio) errores.push('Municipio es obligatorio para FSE');
+        if (!complemento) errores.push('Dirección es obligatoria para FSE');
+      
+      } else {
+        // FC: Solo nombre, tipoDocumento, numDocumento, correo
+        if (!correo) errores.push('Correo es obligatorio para Factura');
+      }
+
+      // Validaciones de formato
+      if (tipoDoc === '13' && numero) { // DUI
+        if (!/^[0-9]{8}-[0-9]$/.test(numero)) {
+          errores.push('Para DUI, el formato debe ser XXXXXXXX-X');
+        }
+      }
+
+      if (tipoDoc === '36' && numero) { // NIT
+        if (!/^(\d{9}|\d{14})$/.test(numero.replace(/\D/g, ''))) {
+          errores.push('Para NIT, el número debe tener 9 o 14 dígitos');
+        }
+      }
+
+      return errores;
+    }
+
+    // Función para mostrar errores
+    // Función para mostrar errores - VERSIÓN CORREGIDA
+    function mostrarErroresValidacion(errores) {
+      const messagesDiv = document.getElementById('validationMessages');
+      const listUl = document.getElementById('validationList');
+      
+      // Verificar que los elementos existan
+      if (!messagesDiv || !listUl) {
+        console.error('Elementos de validación no encontrados');
+        // Fallback: mostrar alert
+        if (errores.length > 0) {
+          alert('Errores encontrados:\n' + errores.join('\n'));
+        }
+        return;
+      }
+      
+      if (errores.length > 0) {
+        listUl.innerHTML = '';
+        errores.forEach(error => {
+          const li = document.createElement('li');
+          li.textContent = error;
+          listUl.appendChild(li);
+        });
+        messagesDiv.style.display = 'block';
+      } else {
+        messagesDiv.style.display = 'none';
+      }
+    }
+
+    // Event listener cuando se abre el modal
+    // Event listener cuando se abre el modal de crear/editar receptor
+    // Event listener cuando se abre el modal de crear/editar receptor
+    // Reemplazar el event listener del modal de receptor
+    // Reemplazar el event listener del modal de receptor
+    // Reemplazar el event listener del modal de receptor
+    document.getElementById('receptorModal').addEventListener('show.bs.modal', function () {
+        // Solo ejecutar inicializaciones si NO es una edición
+        const esEdicion = document.querySelector('#receptorModal .modal-title').textContent === 'Editar Receptor';
+        
+        if (!esEdicion) {
+            // Limpiar errores de validación
+            mostrarErroresValidacion([]);
+        }
+        
+        actualizarCamposObligatorios();
+        
+        // Inicializar Tom Select
+        setTimeout(() => {
+            inicializarTomSelect();
+        }, 100);
+        
+        // Configurar máscara DUI solo si NO es edición
+        if (!esEdicion) {
+            const numDocInput = document.querySelector('#receptorModalForm input[name="numDocumento"]');
+            const tipoDocSelect = document.querySelector('#receptorModalForm select[name="tipoDocumento"]');
+            const formatoDiv = document.getElementById('formatoDocumento');
+            
+            // Limpiar listeners anteriores
+            const nuevoTipoSelect = tipoDocSelect.cloneNode(true);
+            tipoDocSelect.parentNode.replaceChild(nuevoTipoSelect, tipoDocSelect);
+            
+            function manejarCambioTipoModal() {
+                const inputActual = document.querySelector('#receptorModalForm input[name="numDocumento"]');
+                const tipoSeleccionado = nuevoTipoSelect.value;
+                
+                if (tipoSeleccionado === '13') { // DUI
+                    formatoDiv.style.display = 'block';
+                    inputActual.value = '';
+                    aplicarMascaraDUI(inputActual);
+                } else {
+                    formatoDiv.style.display = 'none';
+                    const inputLimpio = inputActual.cloneNode(true);
+                    inputActual.parentNode.replaceChild(inputLimpio, inputActual);
+                    inputLimpio.value = '';
+                }
+            }
+            
+            nuevoTipoSelect.addEventListener('change', manejarCambioTipoModal);
+        } else {
+            // Para edición, configurar máscara DUI de manera más simple
+            const tipoDocSelect = document.querySelector('#receptorModalForm select[name="tipoDocumento"]');
+            const formatoDiv = document.getElementById('formatoDocumento');
+            
+            tipoDocSelect.addEventListener('change', function() {
+                const numDocInput = document.querySelector('#receptorModalForm input[name="numDocumento"]');
+                
+                if (this.value === '13') { // DUI
+                    formatoDiv.style.display = 'block';
+                    if (!numDocInput.value || !numDocInput.value.includes('-')) {
+                        aplicarMascaraDUI(numDocInput);
+                    }
+                } else {
+                    formatoDiv.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    // Agregar esta función de debug después de la función seleccionarReceptorDirecto
+    function debugReceptorActual() {
+        if (receptorActual) {
+            console.log('=== DEBUG RECEPTOR ACTUAL ===');
+            console.log('ID:', receptorActual.id);
+            console.log('Tipo Documento:', receptorActual.tipoDocumento);
+            console.log('Número:', receptorActual.numDocumento);
+            console.log('Nombre:', receptorActual.nombre);
+            console.log('Departamento:', receptorActual.departamento);
+            console.log('Municipio:', receptorActual.municipio);
+            console.log('Código Actividad:', receptorActual.codActividad);
+            console.log('===============================');
+        } else {
+            console.log('No hay receptor actual');
+        }
+    }
+
+    // Función para configurar máscara de DUI en modal de búsqueda
+    // Función para configurar máscara de DUI en modal de búsqueda - SOLO PARA TIPO 13
+    // Función para configurar máscara de DUI en modal de búsqueda - CORREGIDA
+    // Reemplazar la función configurarMascaraDUIBusqueda
+    function configurarMascaraDUIBusqueda() {
+        const tipoDocSelect = document.getElementById('modalBuscarTipoDocumento');
+        const formatoDiv = document.getElementById('formatoDocumentoBuscar');
+        
+        // Remover listeners anteriores clonando el select
+        const nuevoSelect = tipoDocSelect.cloneNode(true);
+        tipoDocSelect.parentNode.replaceChild(nuevoSelect, tipoDocSelect);
+        
+        nuevoSelect.addEventListener('change', function() {
+            const numDocInput = document.getElementById('modalBuscarNumDocumento');
+            
+            if (this.value === '13') { // DUI
+                formatoDiv.style.display = 'block';
+                numDocInput.value = ''; // Limpiar campo
+                aplicarMascaraDUI(numDocInput);
+            } else {
+                formatoDiv.style.display = 'none';
+                // Limpiar máscara para otros tipos
+                const inputLimpio = numDocInput.cloneNode(true);
+                numDocInput.parentNode.replaceChild(inputLimpio, numDocInput);
+                inputLimpio.value = '';
+            }
+        });
+    }
+
+    // Configurar máscara para modal de búsqueda al cargar la página
+    configurarMascaraDUIBusqueda();
+
+    // Event listener cuando se abre el modal de búsqueda
+    // Al final del DOMContentLoaded, agregar:
+// Reconfigurar máscaras cuando se abren los modales
+    // En el event listener de show.bs.modal del buscarReceptorModal:
+    document.getElementById('buscarReceptorModal').addEventListener('show.bs.modal', function () {
+        // Limpiar campos al abrir
+        document.getElementById('modalBuscarTipoDocumento').value = '';
+        document.getElementById('modalBuscarNumDocumento').value = '';
+        document.getElementById('formatoDocumentoBuscar').style.display = 'none';
+        
+        // CRÍTICO: Resetear el div de resultados y asegurar que esté visible
+        const resultDiv = document.getElementById('receptorSearchResult');
+        resultDiv.innerHTML = '';
+        resultDiv.style.display = 'block'; // Asegurar que esté visible por defecto
+        resultDiv.style.visibility = 'visible';
+        
+        // Reconfigurar la máscara
+        configurarMascaraDUIBusqueda();
+    });
+
+    // Agregar después de la función actualizarCamposObligatorios
+    let tomSelectInstance = null;
+
+    function inicializarTomSelect() {
+        // Destruir instancia anterior si existe
+        if (tomSelectInstance) {
+            tomSelectInstance.destroy();
+            tomSelectInstance = null;
+        }
+        
+        const selectElement = document.querySelector('#receptorModalForm select[name="codActividad"]');
+        if (selectElement) {
+            tomSelectInstance = new TomSelect(selectElement, {
+                placeholder: 'Buscar actividad económica...',
+                allowEmptyOption: true,
+                searchField: ['text'],
+                valueField: 'value',
+                labelField: 'text',
+                render: {
+                    option: function(data, escape) {
+                        return '<div>' + escape(data.text) + '</div>';
+                    }
+                }
+            });
+        }
+    }
+
+    // Función para establecer valor en Tom Select
+    function setTomSelectValue(valor) {
+        if (tomSelectInstance && valor) {
+            tomSelectInstance.setValue(valor);
+        }
+    }
+
+    // Agregar después de la función mostrarReceptor
+    function validarCompleitudReceptor(receptor) {
+        const camposFaltantes = [];
+        
+        if (esCCF) {
+            // Campos obligatorios para CCF
+            const obligatoriosCCF = {
+                'tipoDocumento': 'Tipo de Documento',
+                'numDocumento': 'Número de Documento',
+                'nrc': 'NRC',
+                'nombre': 'Nombre',
+                'codActividad': 'Código de Actividad',
+                'descActividad': 'Descripción de Actividad',
+                'departamento': 'Departamento',
+                'municipio': 'Municipio',
+                'complemento': 'Dirección',
+                'telefono': 'Teléfono',
+                'correo': 'Correo Electrónico'
+            };
+            
+            Object.keys(obligatoriosCCF).forEach(campo => {
+                if (!receptor[campo] || !String(receptor[campo]).trim()) {
+                    camposFaltantes.push(obligatoriosCCF[campo]);
+                }
+            });
+            
+        } else if (tipoDte === '14') {
+            // Campos obligatorios para FSE (sin NRC)
+            const obligatoriosFSE = {
+                'tipoDocumento': 'Tipo de Documento',
+                'numDocumento': 'Número de Documento',
+                'nombre': 'Nombre',
+                'departamento': 'Departamento',
+                'municipio': 'Municipio',
+                'complemento': 'Dirección',
+                'correo': 'Correo Electrónico'
+            };
+            
+            Object.keys(obligatoriosFSE).forEach(campo => {
+                if (!receptor[campo] || !String(receptor[campo]).trim()) {
+                    camposFaltantes.push(obligatoriosFSE[campo]);
+                }
+            });
+            
+        } else {
+            // Campos obligatorios para FC
+            const obligatoriosFC = {
+                'tipoDocumento': 'Tipo de Documento',
+                'numDocumento': 'Número de Documento',
+                'nombre': 'Nombre',
+                'correo': 'Correo Electrónico'
+            };
+            
+            Object.keys(obligatoriosFC).forEach(campo => {
+                if (!receptor[campo] || !String(receptor[campo]).trim()) {
+                    camposFaltantes.push(obligatoriosFC[campo]);
+                }
+            });
+        }
+        
+        return camposFaltantes;
+    }
+
+    function mostrarAdvertenciaCamposFaltantes(camposFaltantes) {
+        // Remover advertencia anterior si existe
+        const advertenciaAnterior = document.querySelector('.advertencia-campos-faltantes');
+        if (advertenciaAnterior) {
+            advertenciaAnterior.remove();
+        }
+        
+        if (camposFaltantes.length > 0) {
+            const receptorForm = document.getElementById('receptorForm');
+            const advertencia = document.createElement('div');
+            advertencia.className = 'alert alert-warning advertencia-campos-faltantes mt-2';
+            advertencia.innerHTML = `
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Campos Faltantes</h6>
+                <p class="mb-2">Este receptor no tiene información completa para ${esCCF ? 'CCF' : (tipoDte === '14' ? 'FSE' : 'FC')}:</p>
+                <ul class="mb-2">
+                    ${camposFaltantes.map(campo => `<li>${campo}</li>`).join('')}
+                </ul>
+                <button type="button" class="btn btn-sm btn-warning" id="completarReceptor">
+                    <i class="fas fa-edit me-1"></i>Completar Información
+                </button>
+            `;
+            
+            receptorForm.appendChild(advertencia);
+            
+            // Event listener para el botón de completar
+            document.getElementById('completarReceptor').addEventListener('click', function() {
+                document.getElementById('editarReceptor').click();
+            });
+        }
+    }
+  });
+</script>
+{% endblock %}

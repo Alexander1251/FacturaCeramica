@@ -1,0 +1,44 @@
+{% extends 'productos/base.html' %}
+{% block title %}Registro de Usuario | Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white text-center py-3">
+        <h4 class="text-success mb-0"><i class="fas fa-user-plus me-2"></i>Nuevo Usuario</h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row">
+            {% for field in form %}
+              {# Campos que ocupan toda la fila: email y contraseñas #}
+              <div class="{% if field.name == 'username' or field.name == 'email' or field.name == 'password1' or field.name == 'password2' %}col-12{% else %}col-md-6{% endif %} mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                  <div class="form-text small">{{ field.help_text }}</div>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="text-danger small mt-1">
+                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="d-grid mt-3">
+            <button type="submit" class="btn btn-success py-2">
+              <i class="fas fa-user-check me-2"></i>Crear Cuenta
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer bg-white text-center border-0 py-3">
+        <small>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión aquí</a></small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

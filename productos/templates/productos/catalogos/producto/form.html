@@ -1,0 +1,417 @@
+<!-- productos/templates/productos/catalogos/producto/form.html -->
+{% extends 'productos/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Editar Producto{% else %}Nuevo Producto{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        {% if object %}
+                            <i class="fas fa-edit"></i> Editar Producto: {{ object.nombre }}
+                        {% else %}
+                            <i class="fas fa-plus"></i> Nuevo Producto
+                        {% endif %}
+                    </h3>
+                </div>
+                
+                <!-- CRÍTICO: Asegurar que el form tenga enctype correcto -->
+                <form method="post" enctype="multipart/form-data" id="productoForm">
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <!-- Debug: Mostrar errores del formulario -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Errores en el formulario:</h5>
+                                {% for field, errors in form.errors.items %}
+                                    <p><strong>{{ field }}:</strong> {{ errors|join:", " }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <!-- Información básica -->
+                            <div class="col-md-6">
+                                <h5>Información Básica</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                        {{ form.nombre.label }} *
+                                    </label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="text-danger">{{ form.nombre.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                        {{ form.descripcion.label }}
+                                    </label>
+                                    {{ form.descripcion }}
+                                    {% if form.descripcion.errors %}
+                                        <div class="text-danger">{{ form.descripcion.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                                                {{ form.categoria.label }} *
+                                            </label>
+                                            {{ form.categoria }}
+                                            {% if form.categoria.errors %}
+                                                <div class="text-danger">{{ form.categoria.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.proveedor.id_for_label }}" class="form-label">
+                                                {{ form.proveedor.label }}
+                                            </label>
+                                            {{ form.proveedor }}
+                                            {% if form.proveedor.errors %}
+                                                <div class="text-danger">{{ form.proveedor.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Códigos y precios -->
+                            <div class="col-md-6">
+                                <h5>Códigos y Precios</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.codigo1.id_for_label }}" class="form-label">
+                                                {{ form.codigo1.label }} *
+                                            </label>
+                                            {{ form.codigo1 }}
+                                            {% if form.codigo1.errors %}
+                                                <div class="text-danger">{{ form.codigo1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.precio1.id_for_label }}" class="form-label">
+                                                {{ form.precio1.label }} *
+                                            </label>
+                                            {{ form.precio1 }}
+                                            {% if form.precio1.errors %}
+                                                <div class="text-danger">{{ form.precio1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Códigos y precios adicionales -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.codigo2.id_for_label }}" class="form-label">
+                                                {{ form.codigo2.label }}
+                                            </label>
+                                            {{ form.codigo2 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.precio2.id_for_label }}" class="form-label">
+                                                {{ form.precio2.label }}
+                                            </label>
+                                            {{ form.precio2 }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.codigo3.id_for_label }}" class="form-label">
+                                                {{ form.codigo3.label }}
+                                            </label>
+                                            {{ form.codigo3 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.precio3.id_for_label }}" class="form-label">
+                                                {{ form.precio3.label }}
+                                            </label>
+                                            {{ form.precio3 }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.codigo4.id_for_label }}" class="form-label">
+                                                {{ form.codigo4.label }}
+                                            </label>
+                                            {{ form.codigo4 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.precio4.id_for_label }}" class="form-label">
+                                                {{ form.precio4.label }}
+                                            </label>
+                                            {{ form.precio4 }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.descuento_por_defecto.id_for_label }}" class="form-label">
+                                                {{ form.descuento_por_defecto.label }}
+                                            </label>
+                                            {{ form.descuento_por_defecto }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ form.existencias.id_for_label }}" class="form-label">
+                                                {{ form.existencias.label }}
+                                            </label>
+                                            {{ form.existencias }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sección de imágenes -->
+                        <hr>
+                        <h5>Imágenes del Producto</h5>
+                        <p class="text-muted">Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB por imagen.</p>
+                        
+                        <div class="row">
+                            <!-- Imagen 1 -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Imagen 1</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Mostrar imagen actual si existe -->
+                                        {% if object.imagen1 %}
+                                            <div class="mb-3">
+                                                <img src="{{ object.imagen1.url }}" 
+                                                     alt="Imagen 1" 
+                                                     class="img-fluid img-thumbnail"
+                                                     style="max-height: 150px;">
+                                                <div class="form-check mt-2">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input" 
+                                                           name="delete_imagen1" 
+                                                           value="true"
+                                                           id="delete_imagen1">
+                                                    <label class="form-check-label text-danger" 
+                                                           for="delete_imagen1">
+                                                        <i class="fas fa-trash"></i> Eliminar
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Campo de archivo -->
+                                        <div class="mb-3">
+                                            <label for="{{ form.imagen1.id_for_label }}" class="form-label">
+                                                {% if object.imagen1 %}Cambiar imagen{% else %}Seleccionar imagen{% endif %}
+                                            </label>
+                                            {{ form.imagen1 }}
+                                            {% if form.imagen1.errors %}
+                                                <div class="text-danger">{{ form.imagen1.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Imagen 2 -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Imagen 2</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if object.imagen2 %}
+                                            <div class="mb-3">
+                                                <img src="{{ object.imagen2.url }}" 
+                                                     alt="Imagen 2" 
+                                                     class="img-fluid img-thumbnail"
+                                                     style="max-height: 150px;">
+                                                <div class="form-check mt-2">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input" 
+                                                           name="delete_imagen2" 
+                                                           value="true"
+                                                           id="delete_imagen2">
+                                                    <label class="form-check-label text-danger" 
+                                                           for="delete_imagen2">
+                                                        <i class="fas fa-trash"></i> Eliminar
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-3">
+                                            <label for="{{ form.imagen2.id_for_label }}" class="form-label">
+                                                {% if object.imagen2 %}Cambiar imagen{% else %}Seleccionar imagen{% endif %}
+                                            </label>
+                                            {{ form.imagen2 }}
+                                            {% if form.imagen2.errors %}
+                                                <div class="text-danger">{{ form.imagen2.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Imagen 3 -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Imagen 3</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if object.imagen3 %}
+                                            <div class="mb-3">
+                                                <img src="{{ object.imagen3.url }}" 
+                                                     alt="Imagen 3" 
+                                                     class="img-fluid img-thumbnail"
+                                                     style="max-height: 150px;">
+                                                <div class="form-check mt-2">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input" 
+                                                           name="delete_imagen3" 
+                                                           value="true"
+                                                           id="delete_imagen3">
+                                                    <label class="form-check-label text-danger" 
+                                                           for="delete_imagen3">
+                                                        <i class="fas fa-trash"></i> Eliminar
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-3">
+                                            <label for="{{ form.imagen3.id_for_label }}" class="form-label">
+                                                {% if object.imagen3 %}Cambiar imagen{% else %}Seleccionar imagen{% endif %}
+                                            </label>
+                                            {{ form.imagen3 }}
+                                            {% if form.imagen3.errors %}
+                                                <div class="text-danger">{{ form.imagen3.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Imagen 4 -->
+                            <div class="col-md-3">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6>Imagen 4</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if object.imagen4 %}
+                                            <div class="mb-3">
+                                                <img src="{{ object.imagen4.url }}" 
+                                                     alt="Imagen 4" 
+                                                     class="img-fluid img-thumbnail"
+                                                     style="max-height: 150px;">
+                                                <div class="form-check mt-2">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input" 
+                                                           name="delete_imagen4" 
+                                                           value="true"
+                                                           id="delete_imagen4">
+                                                    <label class="form-check-label text-danger" 
+                                                           for="delete_imagen4">
+                                                        <i class="fas fa-trash"></i> Eliminar
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-3">
+                                            <label for="{{ form.imagen4.id_for_label }}" class="form-label">
+                                                {% if object.imagen4 %}Cambiar imagen{% else %}Seleccionar imagen{% endif %}
+                                            </label>
+                                            {{ form.imagen4 }}
+                                            {% if form.imagen4.errors %}
+                                                <div class="text-danger">{{ form.imagen4.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            {% if object %}Actualizar{% else %}Crear{% endif %} Producto
+                        </button>
+                        <a href="{% url 'producto_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para preview de imágenes -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug: verificar que el form tiene el enctype correcto
+    const form = document.getElementById('productoForm');
+    console.log('Form enctype:', form.enctype);
+    console.log('Form method:', form.method);
+    
+    // Preview de imágenes
+    const imageInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+    
+    imageInputs.forEach(function(input) {
+        input.addEventListener('change', function(e) {
+            console.log('Archivo seleccionado:', e.target.files[0]);
+            
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Buscar si ya hay una imagen preview
+                    let preview = input.parentElement.querySelector('.preview-img');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.className = 'preview-img img-fluid img-thumbnail mt-2';
+                        preview.style.maxHeight = '100px';
+                        input.parentElement.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,716 @@
+{% extends 'productos/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-primary">
+                <i class="fas fa-file-alt me-2"></i>
+                {{ title }}
+            </h2>
+        </div>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="steps-indicator">
+                <div class="step {% if paso == 'seleccionar_documento' %}active{% endif %}">
+                    1. Seleccionar Documento
+                </div>
+                <div class="step {% if paso == 'crear_nc' %}active{% endif %}">
+                    2. Crear Nota de Crédito
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if paso == 'seleccionar_documento' %}
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Nota:</strong> Solo se muestran documentos CCF con items disponibles para acreditar.
+                Los documentos que ya han sido completamente acreditados no aparecen en la lista.
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ documento_form.documento_origen.id_for_label }}" class="form-label">
+                        {{ documento_form.documento_origen.label }}
+                    </label>
+                    {{ documento_form.documento_origen }}
+                    {% if documento_form.documento_origen.help_text %}
+                    <div class="form-text">{{ documento_form.documento_origen.help_text }}</div>
+                    {% endif %}
+                    {% if documento_form.documento_origen.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ documento_form.documento_origen.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        Continuar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- PASO 2: Crear Nota de Crédito -->
+    <form method="post" name="seleccionar_items">
+        {% csrf_token %}
+        <input type="hidden" name="documento_origen_id" value="{{ documento_origen.id }}">
+        <input type="hidden" name="seleccionar_items" value="1">
+
+        <!-- Información del documento original CON ESTADO DE ACREDITACIÓN -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-invoice me-2"></i>
+                            Documento Original: {{ documento_origen.identificacion.numeroControl }}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-light text-dark me-2">
+                            {{ documento_origen.identificacion.tipoDte.texto }}
+                        </span>
+                        <!-- NUEVO: Badge de estado de acreditación -->
+                        {% if resumen_documento.porcentaje_ya_acreditado != "0.0" %}
+                        <span class="badge bg-warning text-dark">
+                            {{ resumen_documento.porcentaje_ya_acreditado }}% ya acreditado
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success">
+                            Sin acreditaciones previas
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Receptor:</strong> {{ documento_origen.receptor.nombre }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Fecha:</strong> {{ documento_origen.identificacion.fecEmi|date:"d/m/Y" }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>Total:</strong> ${{ documento_origen.resumen.totalPagar|floatformat:2 }}
+                    </div>
+                    <div class="col-md-2">
+                        <strong>NIT:</strong> {{ documento_origen.receptor.numDocumento }}
+                    </div>
+                    <!-- NUEVO: Información de disponibilidad -->
+                    <div class="col-md-3">
+                        <strong>Items disponibles:</strong> 
+                        <span class="badge bg-primary">{{ resumen_documento.items_disponibles_count }}</span>
+                        de 
+                        <span class="badge bg-secondary">{{ resumen_documento.items_count }}</span>
+                        totales
+                    </div>
+                </div>
+                
+                <!-- NUEVO: Barra de progreso de acreditación -->
+                {% if resumen_documento.porcentaje_ya_acreditado != "0.0" %}
+                <div class="row mt-3">
+                    <div class="col">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Estado de acreditación del documento</span>
+                            <span>{{ resumen_documento.porcentaje_disponible }}% aún disponible</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {{ resumen_documento.porcentaje_ya_acreditado }}%"
+                                 title="{{ resumen_documento.porcentaje_ya_acreditado }}% ya acreditado">
+                            </div>
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ resumen_documento.porcentaje_disponible }}%"
+                                 title="{{ resumen_documento.porcentaje_disponible }}% disponible">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Columna izquierda: Formularios principales -->
+            <div class="col-lg-8">
+                <!-- Detalles específicos de NC -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clipboard-list"></i> Detalles de la Nota de Crédito</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ nc_detalle_form|crispy }}
+                    </div>
+                </div>
+
+                <!-- Selección de items MEJORADA -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-list-check me-2"></i>
+                                    Items Disponibles para Nota de Crédito
+                                </h5>
+                                <small class="text-muted">
+                                    Solo se muestran items que aún tienen cantidad disponible para acreditar
+                                </small>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-primary btn-sm me-2"
+                                    id="btn-seleccionar-todo">
+                                    <i class="fas fa-check-double me-1"></i>
+                                    Seleccionar Todo
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    id="btn-limpiar-seleccion">
+                                    <i class="fas fa-times me-1"></i>
+                                    Limpiar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">
+                                            <input type="checkbox" id="select-all" class="form-check-input">
+                                        </th>
+                                        <th>Descripción</th>
+                                        <th width="80">Cant. Original</th>
+                                        <th width="80">Ya Acreditada</th>
+                                        <th width="80">Disponible</th>
+                                        <th width="100">Cant. NC</th>
+                                        <th width="90">Precio Unit.</th>
+                                        <th width="90">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items_originales %}
+                                    <tr class="item-row" data-item-id="{{ item.id }}">
+                                        <td>
+                                            <input type="checkbox" name="seleccionar_{{ item.id }}"
+                                                value="{{ item.id }}" class="form-check-input item-checkbox">
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">{{ item.descripcion }}</div>
+                                            {% if item.codigo %}
+                                            <small class="text-muted">Código: {{ item.codigo }}</small>
+                                            {% endif %}
+                                            <!-- NUEVO: Mostrar información de NC anteriores -->
+                                            {% if item.tiene_nc_anteriores %}
+                                            <div class="mt-1">
+                                                <small class="text-warning">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    {{ item.info_disponibilidad }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-secondary">{{ item.cantidad_original }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.cantidad_acreditada != "0.00" %}
+                                            <span class="badge bg-warning text-dark">{{ item.cantidad_acreditada }}</span>
+                                            {% else %}
+                                            <span class="badge bg-light text-muted">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success">{{ item.cantidad_disponible }}</span>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="cantidad_{{ item.id }}" 
+                                                class="form-control form-control-sm cantidad-input" min="0"
+                                                max="{{ item.cantidad_disponible }}" step="1"
+                                                data-cantidad-maxima="{{ item.cantidad_disponible }}"
+                                                data-cantidad-original="{{ item.cantidad_original }}"
+                                                data-cantidad-acreditada="{{ item.cantidad_acreditada }}"
+                                                data-precio-unitario="{{ item.precioUni }}" disabled>
+                                        </td>
+                                        <td class="text-end">
+                                            ${{ item.precioUniDisplay }}
+                                        </td>
+                                        <td class="text-end">
+                                            <span class="subtotal-item fw-bold">$0.00</span>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <div class="d-flex flex-column align-items-center">
+                                                <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                                <h6>No hay items disponibles</h6>
+                                                <p class="mb-0">Todos los items de este documento ya han sido completamente acreditados en notas de crédito anteriores.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-success btn-lg" id="btn-crear-nc" disabled>
+                        <i class="fas fa-save"></i> Crear Nota de Crédito
+                    </button>
+                    <a href="{% url 'dte:crear_nota_credito' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <a href="{% url 'dte:factura_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Resumen dinámico MEJORADO -->
+            <div class="col-lg-4">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            Resumen de la Nota de Crédito
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Información del documento original MEJORADA -->
+                        <div class="border-bottom p-3 bg-light">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-file-invoice me-1"></i>
+                                Documento Original
+                            </h6>
+                            <div class="small">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span><strong>No. Control:</strong></span>
+                                    <span class="text-primary">{{ documento_origen.identificacion.numeroControl}}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span><strong>Fecha:</strong></span>
+                                    <span>{{ documento_origen.identificacion.fecEmi|date:"d/m/Y" }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span><strong>Total Original:</strong></span>
+                                    <span class="fw-bold">${{ documento_origen.resumen.totalPagar|floatformat:2}}</span>
+                                </div>
+                                <!-- NUEVO: Estado de acreditación -->
+                                {% if resumen_documento.porcentaje_ya_acreditado != "0.0" %}
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span><strong>Ya Acreditado:</strong></span>
+                                    <span class="text-warning">{{ resumen_documento.porcentaje_ya_acreditado }}%</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Receptor información -->
+                        <div class="border-bottom p-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-user me-1"></i>
+                                Cliente
+                            </h6>
+                            <div class="small">
+                                <div class="mb-1">
+                                    <strong>{{ documento_origen.receptor.nombre }}</strong>
+                                </div>
+                                <div class="text-muted">
+                                    {{ documento_origen.receptor.tipoDocumento.texto }}: {{documento_origen.receptor.numDocumento }}
+                                </div>
+                                {% if documento_origen.receptor.nrc %}
+                                <div class="text-muted">
+                                    NRC: {{ documento_origen.receptor.nrc }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Resumen de la NC -->
+                        <div class="p-3">
+                            <h6 class="text-muted mb-3">
+                                <i class="fas fa-receipt me-1"></i>
+                                Nota de Crédito
+                            </h6>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span id="subtotal-nc" class="fw-bold">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>IVA (13%):</span>
+                                <span id="iva-nc" class="fw-bold">$0.00</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="fw-bold">Total NC:</span>
+                                <span id="total-nc" class="fw-bold text-success fs-5">$0.00</span>
+                            </div>
+
+                            <!-- Progreso MEJORADO -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small text-muted">
+                                    <span>% del original</span>
+                                    <span id="porcentaje-original">0.0%</span>
+                                </div>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar bg-warning" id="barra-porcentaje" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Contador de items MEJORADO -->
+                            <div class="text-center mt-3">
+                                <span class="badge bg-secondary" id="contador-items">0 items seleccionados</span>
+                                <div class="small text-muted mt-1">
+                                    de {{ resumen_documento.items_disponibles_count }} items disponibles
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<style>
+    .steps-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .step {
+        background: #e9ecef;
+        color: #6c757d;
+        padding: 10px 20px;
+        margin: 0 5px;
+        border-radius: 5px;
+        font-weight: 500;
+    }
+
+    .step.active {
+        background: #007bff;
+        color: white;
+    }
+
+    .receptor-readonly-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #007bff;
+    }
+
+    .item-row.selected {
+        background-color: #e3f2fd;
+    }
+
+    .cantidad-input:disabled {
+        background-color: #f8f9fa;
+        opacity: 0.6;
+    }
+
+    .cantidad-input:enabled {
+        background-color: #fff;
+        border-color: #007bff;
+    }
+
+    /* NUEVO: Estilos para información de disponibilidad */
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .progress {
+        background-color: #e9ecef;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // INICIALIZACIÓN DEL SELECT DE DOCUMENTO (PASO 1)
+    const sel = document.getElementById('id_documento_origen');
+    if (sel) {
+        new TomSelect(sel, {
+            maxItems: 1,
+            create: false,
+            placeholder: sel.getAttribute('data-placeholder'),
+            hideSelected: true,
+            searchField: ['text']
+        });
+        return;
+    }
+
+    // CÓDIGO PARA EL PASO 2 - ACTUALIZADO con validaciones de disponibilidad
+    const btnCrear = document.getElementById('btn-crear-nc');
+    const btnSeleccionarTodo = document.getElementById('btn-seleccionar-todo');
+    const btnLimpiarSeleccion = document.getElementById('btn-limpiar-seleccion');
+    const selectAllCheckbox = document.getElementById('select-all');
+
+    if (!btnCrear && !btnSeleccionarTodo) {
+        return;
+    }
+
+    // Función mejorada para calcular precios exactos
+    function calcularPreciosExactos(precioUnitarioCCF, cantidad) {
+        const precioSinIva = parseFloat(precioUnitarioCCF);
+        const subtotalSinIva = precioSinIva * cantidad;
+        const ivaCalculado = subtotalSinIva * 0.13;
+        const totalConIva = subtotalSinIva + ivaCalculado;
+
+        return {
+            subtotalSinIva: subtotalSinIva,
+            ivaCalculado: ivaCalculado,
+            totalConIva: totalConIva
+        };
+    }
+
+    // Función MEJORADA para alternar input de cantidad con validación de disponibilidad
+    function toggleCantidadInput(checkbox) {
+        const itemId = checkbox.value;
+        const cantidadInput = document.querySelector(`input[name="cantidad_${itemId}"]`);
+        const row = checkbox.closest('tr');
+
+        if (checkbox.checked) {
+            cantidadInput.disabled = false;
+            // CAMBIO: usar cantidad disponible en lugar de original
+            const cantidadDisponible = cantidadInput.getAttribute('data-cantidad-maxima');
+            cantidadInput.value = cantidadDisponible;
+            row.classList.add('selected');
+        } else {
+            cantidadInput.disabled = true;
+            cantidadInput.value = '';
+            row.classList.remove('selected');
+        }
+
+        actualizarSubtotalItem(checkbox);
+        actualizarResumen();
+        actualizarContadorItems();
+    }
+
+    // Función para actualizar subtotal de un item
+    function actualizarSubtotalItem(checkbox) {
+        const itemId = checkbox.value;
+        const cantidadInput = document.querySelector(`input[name="cantidad_${itemId}"]`);
+        const subtotalElement = checkbox.closest('tr').querySelector('.subtotal-item');
+
+        if (checkbox.checked && cantidadInput.value) {
+            const cantidad = parseFloat(cantidadInput.value) || 0;
+            const precioUnitario = parseFloat(cantidadInput.getAttribute('data-precio-unitario')) || 0;
+
+            const calculos = calcularPreciosExactos(precioUnitario, cantidad);
+            subtotalElement.textContent = `$${calculos.subtotalSinIva.toFixed(2)}`;
+        } else {
+            subtotalElement.textContent = '$0.00';
+        }
+    }
+
+    // Función para actualizar resumen total
+    // Función para actualizar resumen total - CORREGIDA
+    function actualizarResumen() {
+        let subtotalNC = 0;
+        let ivaNC = 0;
+        const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+
+        checkboxes.forEach(checkbox => {
+            const itemId = checkbox.value;
+            const cantidadInput = document.querySelector(`input[name="cantidad_${itemId}"]`);
+            if (cantidadInput && cantidadInput.value) {
+                const cantidad = parseFloat(cantidadInput.value) || 0;
+                const precioUnitario = parseFloat(cantidadInput.getAttribute('data-precio-unitario')) || 0;
+
+                const calculos = calcularPreciosExactos(precioUnitario, cantidad);
+                subtotalNC += calculos.subtotalSinIva;
+                ivaNC += calculos.ivaCalculado;
+            }
+        });
+
+       
+        
+        // CORRECCIÓN: Usar el total original correcto
+     
+        
+        // CORRECCIÓN: Calcular porcentaje sobre el total (no solo subtotal)
+     
+
+        // Actualizar elementos del DOM
+        
+
+        // Debug para verificar cálculos
+       
+
+        // Validar formulario
+       
+
+        
+    
+
+        const totalNC = subtotalNC + ivaNC;
+        const totalOriginal = parseFloat("{{ documento_origen.resumen.totalPagar|floatformat:2 }}");
+        const porcentaje = totalOriginal > 0 ? (totalNC / totalOriginal) * 100 : 0;
+        console.log(`DEBUG NC: Total original: $${totalOriginal}, Total NC: $${totalNC.toFixed(2)}, Porcentaje: ${porcentaje.toFixed(1)}%`);
+
+        document.getElementById('subtotal-nc').textContent = `$${subtotalNC.toFixed(2)}`;
+        document.getElementById('iva-nc').textContent = `$${ivaNC.toFixed(2)}`;
+        document.getElementById('total-nc').textContent = `$${totalNC.toFixed(2)}`;
+        document.getElementById('porcentaje-original').textContent = `${porcentaje.toFixed(1)}%`;
+        document.getElementById('barra-porcentaje').style.width = `${Math.min(porcentaje, 100)}%`;
+
+        // Validar formulario
+        const motivoValido = document.querySelector('textarea[name="motivo_nota_credito"]')?.value.trim().length >= 10;
+        const tipoValido = document.querySelector('select[name="tipo_nota_credito"]')?.value;
+
+        if (btnCrear) {
+            btnCrear.disabled = !(totalNC > 0 && motivoValido && tipoValido);
+        }
+    }
+
+    // Función para actualizar contador
+    function actualizarContadorItems() {
+        const checkboxes = document.querySelectorAll('.item-checkbox:checked');
+        const contador = document.getElementById('contador-items');
+        if (contador) {
+            contador.textContent = `${checkboxes.length} items seleccionados`;
+        }
+    }
+
+    // Event listeners para checkboxes de items individuales
+    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            toggleCantidadInput(this);
+            // Actualizar el checkbox "Seleccionar todos"
+            const allCheckboxes = document.querySelectorAll('.item-checkbox');
+            const checkedCheckboxes = document.querySelectorAll('.item-checkbox:checked');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allCheckboxes.length === checkedCheckboxes.length;
+            }
+        });
+    });
+
+    // Event listeners MEJORADOS para inputs de cantidad con validación de disponibilidad
+    document.querySelectorAll('.cantidad-input').forEach(input => {
+        input.addEventListener('input', function () {
+            const itemId = this.name.split('_')[1];
+            const checkbox = document.querySelector(`input[name="seleccionar_${itemId}"]`);
+            
+            // NUEVA VALIDACIÓN: Verificar que no exceda la cantidad disponible
+            const cantidadDisponible = parseFloat(this.getAttribute('data-cantidad-maxima'));
+            const cantidadIngresada = parseFloat(this.value);
+            
+            if (cantidadIngresada > cantidadDisponible) {
+                this.setCustomValidity(`La cantidad no puede exceder ${cantidadDisponible} (cantidad disponible)`);
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+            
+            if (checkbox) {
+                actualizarSubtotalItem(checkbox);
+                actualizarResumen();
+            }
+        });
+
+        // Validar que no exceda la cantidad disponible al salir del campo
+        input.addEventListener('blur', function () {
+            const cantidadDisponible = parseFloat(this.getAttribute('data-cantidad-maxima'));
+            const value = parseFloat(this.value);
+
+            if (value > cantidadDisponible) {
+                this.value = cantidadDisponible.toString();
+                const itemId = this.name.split('_')[1];
+                const checkbox = document.querySelector(`input[name="seleccionar_${itemId}"]`);
+                if (checkbox) {
+                    actualizarSubtotalItem(checkbox);
+                    actualizarResumen();
+                }
+                
+                // Mostrar mensaje de advertencia
+                const row = this.closest('tr');
+                const descripcion = row.querySelector('.fw-bold').textContent;
+                alert(`La cantidad se ajustó automáticamente a ${cantidadDisponible} que es la cantidad disponible para "${descripcion}"`);
+            }
+        });
+    });
+
+    // Botón "Seleccionar todo"
+    if (btnSeleccionarTodo) {
+        btnSeleccionarTodo.addEventListener('click', function () {
+            const allCheckboxes = document.querySelectorAll('.item-checkbox');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                toggleCantidadInput(checkbox);
+            });
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = true;
+            }
+        });
+    }
+
+    // Botón "Limpiar selección"
+    if (btnLimpiarSeleccion) {
+        btnLimpiarSeleccion.addEventListener('click', function () {
+            const allCheckboxes = document.querySelectorAll('.item-checkbox');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                toggleCantidadInput(checkbox);
+            });
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+        });
+    }
+
+    // Checkbox "Seleccionar todo"
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function () {
+            document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+                checkbox.checked = this.checked;
+                toggleCantidadInput(checkbox);
+            });
+        });
+    }
+
+    // Validación de formulario en tiempo real
+    const motivoTextarea = document.querySelector('textarea[name="motivo_nota_credito"]');
+    const tipoSelect = document.querySelector('select[name="tipo_nota_credito"]');
+
+    if (motivoTextarea) {
+        motivoTextarea.addEventListener('input', actualizarResumen);
+    }
+
+    if (tipoSelect) {
+        tipoSelect.addEventListener('change', actualizarResumen);
+    }
+
+    // Inicialización
+    actualizarResumen();
+    actualizarContadorItems();
+
+    // NUEVO: Mostrar información de items con NC anteriores
+    console.log('Sistema de NC inicializado con control de disponibilidad');
+    console.log('Total original documento:', "{{ documento_origen.resumen.totalPagar|floatformat:2 }}");
+    console.log('Items disponibles:', {{ resumen_documento.items_disponibles_count }});
+    console.log('Items totales:', {{ resumen_documento.items_count }});
+});
+</script>
+{% endblock %}

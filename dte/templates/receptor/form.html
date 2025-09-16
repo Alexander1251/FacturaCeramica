@@ -1,0 +1,497 @@
+{% extends 'productos/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if object %}Editar Receptor{% else %}Nuevo Receptor{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-section:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-color: rgba(0,123,255,0.2);
+    }
+    
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 3px solid #dee2e6;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .validation-message {
+        display: none;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .validation-message.show {
+        display: block;
+    }
+    
+    .validation-success {
+        color: #198754;
+    }
+    
+    .validation-error {
+        color: #dc3545;
+    }
+    
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-left: 8px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        {% if object %}
+                            <i class="fas fa-edit"></i> Editar Receptor: {{ object.nombre }}
+                        {% else %}
+                            <i class="fas fa-plus"></i> Nuevo Receptor
+                        {% endif %}
+                    </h3>
+                </div>
+                
+                <form method="post" id="receptorForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <!-- Mensajes de error del formulario -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Errores en el formulario:</h5>
+                                {% for field, errors in form.errors.items %}
+                                    <p><strong>{{ field }}:</strong> {{ errors|join:", " }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Información del Documento -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-id-card me-2"></i>Información del Documento</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.tipoDocumento.id_for_label }}" class="form-label required-field">
+                                            {{ form.tipoDocumento.label }}
+                                        </label>
+                                        {{ form.tipoDocumento }}
+                                        {% if form.tipoDocumento.errors %}
+                                            <div class="text-danger">{{ form.tipoDocumento.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Seleccione el tipo de documento del receptor</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.numDocumento.id_for_label }}" class="form-label required-field">
+                                            {{ form.numDocumento.label }}
+                                        </label>
+                                        {{ form.numDocumento }}
+                                        {% if form.numDocumento.errors %}
+                                            <div class="text-danger">{{ form.numDocumento.errors }}</div>
+                                        {% endif %}
+                                        <div class="validation-message" id="documentoValidation"></div>
+                                        <div class="form-help">
+                                            DUI: XXXXXXXX-X, NIT: 9 o 14 dígitos
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.nrc.id_for_label }}" class="form-label">
+                                            {{ form.nrc.label }}
+                                        </label>
+                                        {{ form.nrc }}
+                                        {% if form.nrc.errors %}
+                                            <div class="text-danger">{{ form.nrc.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Solo para documentos tipo NIT (36)</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.nombre.id_for_label }}" class="form-label required-field">
+                                            {{ form.nombre.label }}
+                                        </label>
+                                        {{ form.nombre }}
+                                        {% if form.nombre.errors %}
+                                            <div class="text-danger">{{ form.nombre.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Nombre completo del receptor</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actividad Económica -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-briefcase me-2"></i>Actividad Económica</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.codActividad.id_for_label }}" class="form-label">
+                                            {{ form.codActividad.label }}
+                                        </label>
+                                        {{ form.codActividad }}
+                                        {% if form.codActividad.errors %}
+                                            <div class="text-danger">{{ form.codActividad.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Código de actividad económica principal</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.descActividad.id_for_label }}" class="form-label">
+                                            {{ form.descActividad.label }}
+                                        </label>
+                                        {{ form.descActividad }}
+                                        {% if form.descActividad.errors %}
+                                            <div class="text-danger">{{ form.descActividad.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Descripción detallada de la actividad económica</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de Dirección -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-map-marker-alt me-2"></i>Información de Dirección</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.departamento.id_for_label }}" class="form-label">
+                                            {{ form.departamento.label }}
+                                        </label>
+                                        {{ form.departamento }}
+                                        {% if form.departamento.errors %}
+                                            <div class="text-danger">{{ form.departamento.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Departamento de ubicación</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.municipio.id_for_label }}" class="form-label">
+                                            {{ form.municipio.label }}
+                                        </label>
+                                        {{ form.municipio }}
+                                        {% if form.municipio.errors %}
+                                            <div class="text-danger">{{ form.municipio.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Municipio dentro del departamento</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.complemento.id_for_label }}" class="form-label">
+                                            {{ form.complemento.label }}
+                                        </label>
+                                        {{ form.complemento }}
+                                        {% if form.complemento.errors %}
+                                            <div class="text-danger">{{ form.complemento.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Dirección detallada (calle, número, etc.)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de Contacto -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-phone me-2"></i>Información de Contacto</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                                            {{ form.telefono.label }}
+                                        </label>
+                                        {{ form.telefono }}
+                                        {% if form.telefono.errors %}
+                                            <div class="text-danger">{{ form.telefono.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Ej: +503 2222-3333</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.correo.id_for_label }}" class="form-label">
+                                            {{ form.correo.label }}
+                                        </label>
+                                        {{ form.correo }}
+                                        {% if form.correo.errors %}
+                                            <div class="text-danger">{{ form.correo.errors }}</div>
+                                        {% endif %}
+                                        <div class="form-help">Correo para envío de facturas</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            {% if object %}Actualizar{% else %}Crear{% endif %} Receptor
+                        </button>
+                        <a href="{% url 'dte:receptor_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                        
+                        <!-- Información adicional -->
+                        <div class="float-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Los campos marcados con * son obligatorios
+                            </small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para funcionalidad del formulario -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('receptorForm');
+    const tipoDocumentoSelect = document.getElementById('{{ form.tipoDocumento.id_for_label }}');
+    const numDocumentoInput = document.getElementById('{{ form.numDocumento.id_for_label }}');
+    const nrcInput = document.getElementById('{{ form.nrc.id_for_label }}');
+    const departamentoSelect = document.getElementById('{{ form.departamento.id_for_label }}');
+    const municipioSelect = document.getElementById('{{ form.municipio.id_for_label }}');
+    const documentoValidation = document.getElementById('documentoValidation');
+    
+    // Validación en tiempo real del documento
+    let validationTimeout;
+    
+    function validarDocumento() {
+        clearTimeout(validationTimeout);
+        validationTimeout = setTimeout(() => {
+            const tipoDoc = tipoDocumentoSelect.value;
+            const numDoc = numDocumentoInput.value.trim();
+            
+            if (!tipoDoc || !numDoc) {
+                documentoValidation.className = 'validation-message';
+                documentoValidation.textContent = '';
+                return;
+            }
+            
+            // Mostrar spinner de carga
+            documentoValidation.className = 'validation-message show';
+            documentoValidation.innerHTML = '<span class="text-info">Validando...</span><span class="loading-spinner"></span>';
+            
+            // Llamada AJAX para validar
+            fetch(`{% url 'dte:validar_documento_ajax' %}?tipo_documento=${tipoDoc}&num_documento=${encodeURIComponent(numDoc)}{% if object %}&receptor_id={{ object.id }}{% endif %}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.existe) {
+                        documentoValidation.className = 'validation-message validation-error show';
+                        documentoValidation.innerHTML = '<i class="fas fa-times me-1"></i>Ya existe un receptor con este documento';
+                    } else {
+                        documentoValidation.className = 'validation-message validation-success show';
+                        documentoValidation.innerHTML = '<i class="fas fa-check me-1"></i>Documento disponible';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error validando documento:', error);
+                    documentoValidation.className = 'validation-message';
+                    documentoValidation.textContent = '';
+                });
+        }, 500);
+    }
+    
+    // Event listeners para validación
+    if (tipoDocumentoSelect && numDocumentoInput) {
+        tipoDocumentoSelect.addEventListener('change', validarDocumento);
+        numDocumentoInput.addEventListener('input', validarDocumento);
+    }
+    
+    // Manejar cambios en tipo de documento para NRC
+    if (tipoDocumentoSelect && nrcInput) {
+        tipoDocumentoSelect.addEventListener('change', function() {
+            const tipoDoc = this.value;
+            const nrcContainer = nrcInput.closest('.mb-3');
+            
+            if (tipoDoc === '36') { // NIT
+                nrcInput.disabled = false;
+                nrcContainer.style.opacity = '1';
+                nrcContainer.style.pointerEvents = 'auto';
+            } else {
+                nrcInput.disabled = true;
+                nrcInput.value = '';
+                nrcContainer.style.opacity = '0.5';
+                nrcContainer.style.pointerEvents = 'none';
+            }
+        });
+        
+        // Ejecutar al cargar la página
+        tipoDocumentoSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Filtrar municipios por departamento
+    if (departamentoSelect && municipioSelect) {
+        // Guardar el municipio seleccionado inicialmente (para modo edición)
+        const municipioInicialId = municipioSelect.value;
+        
+        function cargarMunicipios(departamentoId, municipioSeleccionado = null) {
+            // Limpiar municipios
+            municipioSelect.innerHTML = '<option value="">---------</option>';
+            
+            if (departamentoId) {
+                // Hacer llamada AJAX para obtener municipios
+                fetch(`{% url 'dte:obtener_municipios_ajax' %}?departamento_id=${departamentoId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.municipios.forEach(municipio => {
+                            const option = document.createElement('option');
+                            option.value = municipio.id;
+                            option.textContent = municipio.texto;
+                            
+                            // Seleccionar el municipio correcto en modo edición
+                            if (municipioSeleccionado && municipio.id == municipioSeleccionado) {
+                                option.selected = true;
+                            }
+                            
+                            municipioSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error cargando municipios:', error);
+                    });
+            }
+        }
+        
+        // Event listener para cambios en departamento
+        departamentoSelect.addEventListener('change', function() {
+            const departamentoId = this.value;
+            cargarMunicipios(departamentoId);
+        });
+        
+        // Cargar municipios al inicializar la página (modo edición)
+        const departamentoInicialId = departamentoSelect.value;
+        if (departamentoInicialId) {
+            cargarMunicipios(departamentoInicialId, municipioInicialId);
+        }
+    }
+    
+    // Validación del formulario antes del envío
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                valid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Verificar si hay errores de validación de documento
+        if (documentoValidation.classList.contains('validation-error')) {
+            valid = false;
+            e.preventDefault();
+            alert('Por favor corrija los errores de validación antes de continuar.');
+            return;
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+            alert('Por favor complete todos los campos obligatorios.');
+        }
+    });
+    
+    // Animaciones de entrada removidas - formulario aparece inmediatamente
+    
+    // Auto-formateo para campos específicos
+    if (numDocumentoInput) {
+        numDocumentoInput.addEventListener('input', function() {
+            const tipoDoc = tipoDocumentoSelect.value;
+            let value = this.value.replace(/\D/g, ''); // Solo números
+            
+            if (tipoDoc === '13' && value.length >= 8) { // DUI
+                value = value.substring(0, 8) + '-' + value.substring(8, 9);
+                this.value = value;
+            }
+        });
+    }
+    
+    // Validación de email en tiempo real
+    const correoInput = document.getElementById('{{ form.correo.id_for_label }}');
+    if (correoInput) {
+        correoInput.addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && !isValidEmail(email)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    }
+    
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+});
+</script>
+{% endblock %}

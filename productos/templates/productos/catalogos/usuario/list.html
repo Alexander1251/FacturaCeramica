@@ -1,0 +1,64 @@
+{% extends 'productos/base.html' %}
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="page-title">
+        <i class="fas fa-users me-2"></i>Gestión de Usuarios
+    </h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table id="usuariosTable" class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Nombres</th>
+                        <th>Apellidos</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Registro</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- DataTables cargará los datos -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#usuariosTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{% url "usuario_datatable" %}',
+        columns: [
+            { data: 0, name: 'id' },
+            { data: 1, name: 'username' },
+            { data: 2, name: 'first_name' },
+            { data: 3, name: 'last_name' },
+            { data: 4, name: 'email' },
+            { data: 5, name: 'rol__nombre' },
+            { data: 6, name: 'activo', orderable: false },
+            { data: 7, name: 'date_joined' },
+            { data: 8, name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[7, 'desc']],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+        },
+        pageLength: 25,
+        responsive: true
+    });
+});
+</script>
+{% endblock %}

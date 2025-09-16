@@ -1,0 +1,167 @@
+{% extends 'productos/base.html' %}
+
+{% block title %}Productos | Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-thumb {
+        transition: transform 0.2s;
+        border-radius: 8px;
+    }
+    
+    .product-thumb:hover {
+        transform: scale(1.1);
+    }
+    
+    .table-container {
+        margin: 0 auto;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    
+    .btn-group .btn {
+        margin: 0 1px;
+    }
+    
+    /* Responsive adjustments for table */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .product-thumb {
+            width: 40px !important;
+            height: 40px !important;
+        }
+    }
+    
+    /* Modal styles */
+    .image-modal .modal-body {
+        text-align: center;
+        padding: 2rem;
+    }
+    
+    .image-modal img {
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-box me-2"></i>Listado de Productos
+    </h1>
+    <a href="{% url 'producto_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Nuevo Producto
+    </a>
+</div>
+
+<div class="container-fluid px-auto">
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="productosTable" class="table table-hover mb-0 align-middle" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 20%">Nombre</th>
+                            <th style="width: 12%">Código</th>
+                            <th style="width: 10%">Precio</th>
+                            <th style="width: 8%">Descuento</th>
+                            <th style="width: 12%">Categoría</th>
+                            <th style="width: 12%">Proveedor</th>
+                            <th style="width: 8%">Existencias</th>
+                            <th style="width: 8%">Imagen</th>
+                            <th style="width: 15%" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded by DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar imagen ampliada -->
+<div class="modal fade image-modal" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Imagen del Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" alt="Imagen del producto" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#productosTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
+            },
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            scrollX: true,
+            autoWidth: false,
+            ajax: {
+                url: "{% url 'producto_datatable' %}",
+                type: 'GET'
+            },
+            columns: [
+                { data: 0, name: 'id', width: '5%' },
+                { data: 1, name: 'nombre', width: '20%' },
+                { data: 2, name: 'codigo1', width: '12%' },
+                { data: 3, name: 'precio1', width: '10%' },
+                { data: 4, name: 'descuento_por_defecto', width: '8%' },
+                { data: 5, name: 'categoria__nombre', width: '12%' },
+                { data: 6, name: 'proveedor__nombre', width: '12%' },
+                { data: 7, name: 'existencias', width: '8%' },
+                { 
+                    data: 8, 
+                    name: 'imagen',
+                    orderable: false,
+                    searchable: false,
+                    width: '8%',
+                    className: 'text-center'
+                },
+                { 
+                    data: 9, 
+                    name: 'actions',
+                    orderable: false,
+                    searchable: false,
+                    width: '15%',
+                    className: 'text-center'
+                }
+            ],
+            order: [[1, 'asc']], // Ordenar por nombre por defecto
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                 '<"row"<"col-sm-12"tr>>' +
+                 '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        });
+    });
+    
+    // Función para mostrar imagen en modal
+    function showImageModal(imageUrl, productName) {
+        document.getElementById('modalImage').src = imageUrl;
+        document.getElementById('imageModalLabel').textContent = `Imagen de ${productName}`;
+        const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

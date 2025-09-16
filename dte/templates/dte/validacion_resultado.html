@@ -1,0 +1,19 @@
+{% extends "productos/base.html" %}
+{% block title %}Resultado de validación{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="page-title">Resultado de la validación</h1>
+
+  {% if valido %}
+    <div class="alert alert-success"><strong>¡Éxito!</strong> El JSON cumple el esquema.</div>
+  {% else %}
+    <div class="alert alert-danger"><strong>Error:</strong> El JSON NO cumple el esquema.</div>
+  {% endif %}
+
+  <pre style="max-height:60vh; overflow:auto; background:#f8f9fa; border-radius:6px;" class="p-3">{{ json_pretty }}</pre>
+
+  <a href="{% url 'dte:factura_list' %}" class="btn btn-primary mt-3">
+    <i class="fas fa-chevron-left"></i> Volver al listado
+  </a>
+</div>
+{% endblock %}

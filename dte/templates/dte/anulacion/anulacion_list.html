@@ -1,0 +1,299 @@
+<!-- templates/dte/anulacion/anulacion_list.html -->
+{% extends "productos/base.html" %}
+{% load humanize %}
+
+{% block title %}Anulaciones de Documentos{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge-estado {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.375rem !important;
+}
+
+/* Estados con colores más visibles y legibles */
+.badge.estado-ACEPTADO { 
+    background-color: #198754 !important; 
+    color: white !important;
+    border: 1px solid #146c43 !important;
+}
+
+.badge.estado-RECHAZADO { 
+    background-color: #dc3545 !important; 
+    color: white !important;
+    border: 1px solid #b02a37 !important;
+}
+
+.badge.estado-PENDIENTE { 
+    background-color: #6c757d !important; 
+    color: white !important;
+    border: 1px solid #565e64 !important;
+}
+
+.badge.estado-ERROR { 
+    background-color: #fd7e14 !important; 
+    color: white !important;
+    border: 1px solid #ca6510 !important;
+}
+
+.badge.estado-ENVIADO { 
+    background-color: #0d6efd !important; 
+    color: white !important;
+    border: 1px solid #0a58ca !important;
+}
+
+/* Específico para el detalle */
+.fs-6.estado-ACEPTADO { 
+    background-color: #198754 !important; 
+    color: white !important;
+}
+
+.fs-6.estado-RECHAZADO { 
+    background-color: #dc3545 !important; 
+    color: white !important;
+}
+
+.fs-6.estado-PENDIENTE { 
+    background-color: #6c757d !important; 
+    color: white !important;
+}
+
+.fs-6.estado-ERROR { 
+    background-color: #fd7e14 !important; 
+    color: white !important;
+}
+
+.fs-6.estado-ENVIADO { 
+    background-color: #0d6efd !important; 
+    color: white !important;
+}
+
+/* Hover effects para mejor interactividad */
+.badge-estado:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Iconos de estado más visibles */
+.estado-icon {
+    margin-right: 0.5rem !important;
+    font-size: 0.9rem !important;
+}
+
+/* Mejorar tabla */
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.075) !important;
+}
+
+.btn-group-sm .btn {
+    margin: 0 1px !important;
+}
+
+/* Asegurar que los badges no sean sobrescritos por Bootstrap */
+span[class*="estado-"] {
+    background-color: var(--bs-primary) !important;
+}
+
+span.badge.estado-ACEPTADO {
+    background-color: #198754 !important;
+}
+
+span.badge.estado-RECHAZADO {
+    background-color: #dc3545 !important;
+}
+
+span.badge.estado-PENDIENTE {
+    background-color: #6c757d !important;
+}
+
+span.badge.estado-ERROR {
+    background-color: #fd7e14 !important;
+}
+
+span.badge.estado-ENVIADO {
+    background-color: #0d6efd !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-ban text-danger me-2"></i>
+            Anulaciones de Documentos
+        </h1>
+        <a href="{% url 'dte:anulacion_crear' %}" class="btn btn-danger">
+            <i class="fas fa-plus me-1"></i> Nueva Anulación
+        </a>
+    </div>
+
+    <!-- Lista de anulaciones -->
+    <div class="card">
+        <div class="card-body">
+            {% if anulaciones %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código Anulación</th>
+                            <th>Documento Anulado</th>
+                            <th>Tipo DTE</th>
+                            <th>Receptor</th>
+                            <th>Fecha Anulación</th>
+                            <th>Estado</th>
+                            <th>Sello</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for anulacion in anulaciones %}
+                        <tr>
+                            <td>
+                                <code>{{ anulacion.codigo_generacion|slice:":8" }}...</code>
+                            </td>
+                            <td>
+                                <a href="{% url 'dte:factura_detail' anulacion.documento_anular.pk %}" 
+                                   class="text-decoration-none">
+                                    {{ anulacion.documento_anular.identificacion.numeroControl }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ anulacion.documento_anular.identificacion.tipoDte.texto }}
+                                </span>
+                            </td>
+                            <td>{{ anulacion.documento_anular.receptor.nombre|truncatechars:30 }}</td>
+                            <td>{{ anulacion.fecha_anulacion|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if anulacion.estado == 'ACEPTADO' %}
+                                    <span class="badge badge-estado" style="background-color: #198754 !important; color: white !important; border: 1px solid #146c43;">
+                                        <i class="fas fa-check-circle estado-icon"></i>{{ anulacion.get_estado_display }}
+                                    </span>
+                                {% elif anulacion.estado == 'RECHAZADO' %}
+                                    <span class="badge badge-estado" style="background-color: #dc3545 !important; color: white !important; border: 1px solid #b02a37;">
+                                        <i class="fas fa-times-circle estado-icon"></i>{{ anulacion.get_estado_display }}
+                                    </span>
+                                {% elif anulacion.estado == 'PENDIENTE' %}
+                                    <span class="badge badge-estado" style="background-color: #6c757d !important; color: white !important; border: 1px solid #565e64;">
+                                        <i class="fas fa-clock estado-icon"></i>{{ anulacion.get_estado_display }}
+                                    </span>
+                                {% elif anulacion.estado == 'ERROR' %}
+                                    <span class="badge badge-estado" style="background-color: #fd7e14 !important; color: white !important; border: 1px solid #ca6510;">
+                                        <i class="fas fa-exclamation-triangle estado-icon"></i>{{ anulacion.get_estado_display }}
+                                    </span>
+                                {% elif anulacion.estado == 'ENVIADO' %}
+                                    <span class="badge badge-estado" style="background-color: #0d6efd !important; color: white !important; border: 1px solid #0a58ca;">
+                                        <i class="fas fa-paper-plane estado-icon"></i>{{ anulacion.get_estado_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        {{ anulacion.get_estado_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if anulacion.sello_recepcion %}
+                                    {% if anulacion.sello_recepcion|slice:":4" == "TEST" %}
+                                        <span class="badge bg-warning text-dark" title="Sello de prueba: {{ anulacion.sello_recepcion }}">
+                                            <i class="fas fa-flask"></i> PRUEBA
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success" title="Sello oficial: {{ anulacion.sello_recepcion }}">
+                                            <i class="fas fa-certificate"></i> OFICIAL
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-times"></i> Sin sello
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'dte:anulacion_detail' anulacion.pk %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if anulacion.estado == 'RECHAZADO' or anulacion.estado == 'ERROR' %}
+                                    <button class="btn btn-outline-warning btn-sm" 
+                                            onclick="reenviarAnulacion({{ anulacion.pk }})"
+                                            title="Reenviar a Hacienda">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-outline-info btn-sm"
+                                            onclick="consultarEstado({{ anulacion.pk }})"
+                                            title="Consultar estado en Hacienda">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-ban fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay anulaciones registradas</h5>
+                <p class="text-muted">Cuando anule documentos aparecerán aquí.</p>
+                <a href="{% url 'dte:anulacion_crear' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Crear Primera Anulación
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function reenviarAnulacion(anulacionId) {
+    if (!confirm('¿Está seguro que desea reenviar esta anulación a Hacienda?')) {
+        return;
+    }
+    
+    fetch(`/dte/anulaciones/${anulacionId}/reenviar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Anulación reenviada exitosamente: ' + data.message);
+            location.reload();
+        } else {
+            alert('Error al reenviar: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error de red: ' + error);
+    });
+}
+
+function consultarEstado(anulacionId) {
+    fetch(`/dte/anulaciones/${anulacionId}/consultar-estado/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Estado en Hacienda: ${data.estado_hacienda}\n${data.descripcion}`);
+        } else {
+            alert('Error al consultar: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error de red: ' + error);
+    });
+}
+</script>
+{% endblock %}

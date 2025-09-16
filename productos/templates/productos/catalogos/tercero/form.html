@@ -1,0 +1,85 @@
+{% extends 'productos/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Tercero | Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="page-title">
+    <i class="fas fa-users me-2"></i>
+    {% if form.instance.pk %}Editar{% else %}Nuevo{% endif %} Tercero
+  </h1>
+  <a href="{% url 'tercero_list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver al listado
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.nombres.id_for_label }}" class="form-label">{{ form.nombres.label }}</label>
+              {{ form.nombres }}
+              {% for err in form.nombres.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.apellidos.id_for_label }}" class="form-label">{{ form.apellidos.label }}</label>
+              {{ form.apellidos }}
+              {% for err in form.apellidos.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.dui.id_for_label }}" class="form-label">{{ form.dui.label }}</label>
+              {{ form.dui }}
+              {% for err in form.dui.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.telefono.id_for_label }}" class="form-label">{{ form.telefono.label }}</label>
+              {{ form.telefono }}
+              {% for err in form.telefono.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.correo.id_for_label }}" class="form-label">{{ form.correo.label }}</label>
+              {{ form.correo }}
+              {% for err in form.correo.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.edad.id_for_label }}" class="form-label">{{ form.edad.label }}</label>
+              {{ form.edad }}
+              {% for err in form.edad.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.sexo.id_for_label }}" class="form-label">{{ form.sexo.label }}</label>
+              {{ form.sexo }}
+              {% for err in form.sexo.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
+              {{ form.direccion }}
+              {% for err in form.direccion.errors %}<div class="text-danger mt-1">{{ err }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save me-2"></i>Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

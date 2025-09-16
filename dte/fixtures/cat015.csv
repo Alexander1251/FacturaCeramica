@@ -1,0 +1,44 @@
+codigo,texto
+20,Impuesto al Valor Agregado 13%
+C3,Impuesto al Valor Agregado (exportaciones) 0%
+59,Turismo: por alojamiento (5%)
+71,Turismo: salida del país por vía aérea $7.00
+D1,FOVIAL ($0.20 Ctvs. por galón)
+C8,COTRANS ($0.10 Ctvs. por galón)
+D5,Otras tasas casos especiales
+D4,Otros impuestos casos especiales
+C5,Impuesto ad-valorem por diferencial de precios de bebidas alcohólicas (8%)
+C6,Impuesto ad-valorem por diferencial de precios al tabaco cigarrillos (39%)
+C7,Impuesto ad-valorem por diferencial de precios al tabaco cigarros (100%)
+19,Fabricante de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante
+28,Importador de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante
+31,Detallistas o Expendedores de Bebidas Alcohólicas
+32,Fabricante de Cerveza
+33,Importador de Cerveza
+34,Fabricante de Productos de Tabaco
+35,Importador de Productos de Tabaco
+36,Fabricante de Armas de Fuego, Municiones y Artículos Similares
+37,Importador de Arma de Fuego, Munición y Artículos Similares
+38,Fabricante de Explosivos
+39,Importador de Explosivos
+42,Fabricante de Productos Pirotécnicos
+43,Importador de Productos Pirotécnicos
+44,Productor de Tabaco
+50,Distribuidor de Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizante o Estimulante
+51,Bebidas Alcohólicas
+52,Cerveza
+53,Productos del Tabaco
+54,Bebidas Carbonatadas o Gaseosas Simples o Endulzadas
+55,Otros Específicos
+58,Alcohol
+77,Importador de Jugos, Néctares, Bebidas con Jugo y Refrescos
+78,Distribuidor de Jugos, Néctares, Bebidas con Jugo y Refrescos
+79,Sobre Llamadas Telefónicas Provenientes del Exterior
+85,Detallista de Jugos, Néctares, Bebidas con Jugo y Refrescos
+86,Fabricante de Preparaciones Concentradas o en Polvo para la Elaboración de Bebidas
+91,Fabricante de Jugos, Néctares, Bebidas con Jugo y Refrescos
+92,Importador de Preparaciones Concentradas o en Polvo para la Elaboración de Bebidas
+A1,Específicos y Ad-Valorem
+A5,Bebidas Gaseosas, Isotónicas, Deportivas, Fortificantes, Energizantes o Estimulantes
+A7,Alcohol Etílico
+A9,Sacos Sintéticos

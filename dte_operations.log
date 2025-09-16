@@ -1,0 +1,976 @@
+INFO 2025-06-21 19:34:41,779 services Enviando documento a firmar: 32469B55-34A6-421B-BA01-9C9659A7A952
+ERROR 2025-06-21 19:34:41,865 services Error al firmar documento: Error al firmar documento: /uploads/06142000100123.crt (No such file or directory)
+INFO 2025-06-21 19:45:02,863 services Enviando documento a firmar: 45B470DC-C763-4239-B76D-1FA50AB2FE76
+ERROR 2025-06-21 19:45:02,933 services Error al firmar documento: Error al firmar documento: No existe llave publica para este nit
+INFO 2025-06-21 19:45:29,724 services Enviando documento a firmar: 54F7C3CA-0718-4B23-97A8-89D2A08A70A5
+ERROR 2025-06-21 19:45:29,768 services Error al firmar documento: Error al firmar documento: No existe llave publica para este nit
+INFO 2025-06-23 19:31:50,100 services Enviando documento a firmar: 86902700-DD3D-4719-AAAC-A983454EC09B
+ERROR 2025-06-23 19:31:50,124 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 22:56:32,209 services Enviando documento a firmar: DE82A19D-FAAB-4FA6-887A-E633DAA915D2
+ERROR 2025-06-24 22:56:32,248 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:02:49,685 services Enviando documento a firmar: 287CE02C-9BE8-4EBF-B0BA-C851C0650757
+ERROR 2025-06-24 23:02:49,717 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:03:14,199 services Enviando documento a firmar: BC6D249F-3771-4AE1-9A32-FD397CA1C523
+ERROR 2025-06-24 23:03:14,222 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:40:03,659 services Enviando documento a firmar: BA35D560-E1E2-4D9D-AD99-8D78302E113B
+ERROR 2025-06-24 23:40:03,674 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:40:03,674 views Error detallado al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:40:03,676 views JSON enviado: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "BA35D560-E1E2-4D9D-AD99-8D78302E113B",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:39:39",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:40:03,677 views Error completo en crear_factura_electronica: Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 692, in crear_factura_electronica
+    documento_firmado = dte_service.firmar_documento(dte_json)
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 74, in firmar_documento
+    raise Exception(f"Error al firmar documento: {error_msg}")
+Exception: Error al firmar documento: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 699, in crear_factura_electronica
+    raise Exception(f"Error al firmar documento: {str(e)}")
+Exception: Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:45:40,708 services Enviando documento a firmar: 64911FAE-E18A-446F-A346-CC01D555179A
+ERROR 2025-06-24 23:45:40,721 services Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:45:40,721 views Error detallado al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:45:40,721 views JSON enviado: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "64911FAE-E18A-446F-A346-CC01D555179A",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:43:00",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:45:40,724 views Error completo en crear_factura_electronica: Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 692, in crear_factura_electronica
+    documento_firmado = dte_service.firmar_documento(dte_json)
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 74, in firmar_documento
+    raise Exception(f"Error al firmar documento: {error_msg}")
+Exception: Error al firmar documento: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 699, in crear_factura_electronica
+    raise Exception(f"Error al firmar documento: {str(e)}")
+Exception: Error al firmar documento: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:55:37,013 services Enviando documento a firmar: A4D275C8-0CD7-4009-8F01-6E95693EF99B
+ERROR 2025-06-24 23:55:37,026 services Error detallado en firmar_documento: Problemas al convertir String a Json: Problemas al convertir String a Json
+ERROR 2025-06-24 23:55:37,027 services JSON que causó el error: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "A4D275C8-0CD7-4009-8F01-6E95693EF99B",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:43:00",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:55:37,027 views Error detallado al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:55:37,027 views JSON enviado: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "A4D275C8-0CD7-4009-8F01-6E95693EF99B",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:43:00",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:55:37,028 views Error completo en crear_factura_electronica: Error al firmar documento: Problemas al convertir String a Json
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 89, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json: {error_msg}")
+Exception: Problemas al convertir String a Json: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 692, in crear_factura_electronica
+    documento_firmado = dte_service.firmar_documento(dte_json)
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 104, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json")
+Exception: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 699, in crear_factura_electronica
+    raise Exception(f"Error al firmar documento: {str(e)}")
+Exception: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-24 23:55:54,738 services Enviando documento a firmar: F52BC4FC-12B6-4E51-9040-625445112A50
+ERROR 2025-06-24 23:55:54,768 services Error detallado en firmar_documento: Problemas al convertir String a Json: Problemas al convertir String a Json
+ERROR 2025-06-24 23:55:54,768 services JSON que causó el error: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "F52BC4FC-12B6-4E51-9040-625445112A50",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:43:00",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:55:54,769 views Error detallado al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-24 23:55:54,769 views JSON enviado: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "F52BC4FC-12B6-4E51-9040-625445112A50",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "05:43:00",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-24 23:55:54,771 views Error completo en crear_factura_electronica: Error al firmar documento: Problemas al convertir String a Json
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 89, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json: {error_msg}")
+Exception: Problemas al convertir String a Json: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 692, in crear_factura_electronica
+    documento_firmado = dte_service.firmar_documento(dte_json)
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 104, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json")
+Exception: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 699, in crear_factura_electronica
+    raise Exception(f"Error al firmar documento: {str(e)}")
+Exception: Error al firmar documento: Problemas al convertir String a Json
+INFO 2025-06-25 00:03:43,306 services Enviando documento a firmar: 946B0F34-9EEC-4189-9672-5BA0B85E36A1
+ERROR 2025-06-25 00:03:43,316 services Error detallado en firmar_documento: Problemas al convertir String a Json: Problemas al convertir String a Json
+ERROR 2025-06-25 00:03:43,317 services JSON que causó el error: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "946B0F34-9EEC-4189-9672-5BA0B85E36A1",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "06:03:30",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-25 00:03:43,317 views Error detallado al firmar documento: Problemas al convertir String a Json
+ERROR 2025-06-25 00:03:43,317 views JSON enviado: {
+  "identificacion": {
+    "version": 1,
+    "ambiente": "00",
+    "tipoDte": "01",
+    "numeroControl": "DTE-01-00010001-000000000000017",
+    "codigoGeneracion": "946B0F34-9EEC-4189-9672-5BA0B85E36A1",
+    "tipoModelo": 1,
+    "tipoOperacion": 1,
+    "tipoContingencia": null,
+    "motivoContin": null,
+    "fecEmi": "2025-06-25",
+    "horEmi": "06:03:30",
+    "tipoMoneda": "USD"
+  },
+  "documentoRelacionado": null,
+  "emisor": {
+    "nit": "07152710640010",
+    "nrc": "00012345",
+    "nombre": "ACME S.A. de C.V.",
+    "codActividad": "01111",
+    "descActividad": "Servicios de ejemplo",
+    "nombreComercial": "ACME Comercio",
+    "tipoEstablecimiento": "01",
+    "direccion": {
+      "departamento": "06",
+      "municipio": "23",
+      "complemento": "Soyapango, Prados de Venecia"
+    },
+    "telefono": "+503 2123-4567",
+    "correo": "emisor@acme.com",
+    "codEstableMH": "0001",
+    "codEstable": "0001",
+    "codPuntoVentaMH": "0001",
+    "codPuntoVenta": "0001"
+  },
+  "receptor": {
+    "tipoDocumento": "13",
+    "numDocumento": "00000000-9",
+    "nrc": null,
+    "nombre": "Juan P\u00e9rez",
+    "codActividad": null,
+    "descActividad": null,
+    "direccion": {
+      "departamento": "01",
+      "municipio": "14",
+      "complemento": "Proveedor direccion"
+    },
+    "telefono": "+503 7000-0000",
+    "correo": "alexanderalfaro1251@gmail.com"
+  },
+  "otrosDocumentos": null,
+  "ventaTercero": null,
+  "cuerpoDocumento": [
+    {
+      "numItem": 1,
+      "tipoItem": 1,
+      "numeroDocumento": null,
+      "cantidad": 1.0,
+      "codigo": "PROD-1",
+      "codTributo": null,
+      "uniMedida": 59,
+      "descripcion": "Repuesto 1",
+      "precioUni": 100.0,
+      "montoDescu": 0.0,
+      "ventaNoSuj": 0.0,
+      "ventaExenta": 0.0,
+      "ventaGravada": 100.0,
+      "tributos": null,
+      "psv": 0.0,
+      "noGravado": 0.0,
+      "ivaItem": 13.0
+    }
+  ],
+  "resumen": {
+    "totalNoSuj": 0.0,
+    "totalExenta": 0.0,
+    "totalGravada": 100.0,
+    "subTotalVentas": 100.0,
+    "descuNoSuj": 0.0,
+    "descuExenta": 0.0,
+    "descuGravada": 0.0,
+    "porcentajeDescuento": 0.0,
+    "totalDescu": 0.0,
+    "tributos": [
+      {
+        "codigo": "20",
+        "descripcion": "Impuesto al Valor Agregado 13%",
+        "valor": 13.0
+      }
+    ],
+    "subTotal": 100.0,
+    "ivaRete1": 0.0,
+    "reteRenta": 0.0,
+    "montoTotalOperacion": 113.0,
+    "totalNoGravado": 0.0,
+    "totalPagar": 113.0,
+    "totalLetras": "CIENTO TRECE D\u00d3LARES",
+    "totalIva": 13.0,
+    "saldoFavor": 0.0,
+    "condicionOperacion": 1,
+    "pagos": null,
+    "numPagoElectronico": ""
+  },
+  "extension": null,
+  "apendice": null
+}
+ERROR 2025-06-25 00:03:43,319 views Error completo en crear_factura_electronica: Error al firmar documento: Problemas al convertir String a Json
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 91, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json: {error_msg}")
+Exception: Problemas al convertir String a Json: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 692, in crear_factura_electronica
+    documento_firmado = dte_service.firmar_documento(dte_json)
+  File "C:\Users\Alexander\Documents\Django\dte\services.py", line 106, in firmar_documento
+    raise Exception(f"Problemas al convertir String a Json")
+Exception: Problemas al convertir String a Json
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Alexander\Documents\Django\dte\views.py", line 699, in crear_factura_electronica
+    raise Exception(f"Error al firmar documento: {str(e)}")
+Exception: Error al firmar documento: Problemas al convertir String a Json

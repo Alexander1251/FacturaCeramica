@@ -1,0 +1,6 @@
+codigo,texto
+1,No disponibilidad de sistema del MH
+2,No disponibilidad de sistema del emisor
+3,Falla en el suministro de servicio de Internet del Emisor
+4,Falla en el suministro de servicio de energía eléctrica del emisor que impida la transmisión de los DTE
+5,Otro (deberá digitar un máximo de 500 caracteres explicando el motivo)

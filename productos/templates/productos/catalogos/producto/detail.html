@@ -1,0 +1,1057 @@
+
+
+{% extends 'productos/base.html' %}
+
+{% block title %}Detalle de Producto | {{ producto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Galería de imágenes mejorada - 4 imágenes perfectamente alineadas */
+    .image-gallery {
+        display: flex;
+        gap: 20px;
+        padding: 20px 0;
+        justify-content: center;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        overflow-x: auto; /* Scroll horizontal en caso necesario */
+    }
+    
+    /* Contenedor de imagen con tamaño fijo y uniforme */
+    .image-item {
+        position: relative;
+        flex: 0 0 calc(25% - 15px); /* Exactamente 1/4 del ancho menos gap */
+        min-width: 200px; /* Tamaño mínimo */
+        max-width: 280px; /* Tamaño máximo */
+        aspect-ratio: 1; /* Ratio cuadrado perfecto */
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Hover effects mejorados */
+    .image-item:hover {
+        transform: translateY(-8px) scale(1.03);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        border-color: rgba(0,123,255,0.3);
+    }
+    
+    /* Imagen con ajuste perfecto */
+    .product-detail-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        background-color: #f8f9fa;
+        opacity: 0;
+    }
+    
+    .product-detail-image.loaded {
+        opacity: 1;
+    }
+    
+    .product-detail-image:hover {
+        transform: scale(1.08);
+        filter: brightness(1.1);
+    }
+    
+    /* Placeholder mejorado con mejor diseño */
+    .image-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #dee2e6;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .image-placeholder:hover {
+        border-color: #adb5bd;
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    }
+    
+    .error-placeholder {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-color: #ffc107;
+        color: #856404;
+    }
+    
+    /* Overlay con información mejorada */
+    .image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.85));
+        color: white;
+        padding: 15px 12px 12px;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-align: center;
+        backdrop-filter: blur(4px);
+    }
+    
+    .image-item:hover .image-overlay {
+        transform: translateY(0);
+    }
+    
+    /* Indicador de zoom mejorado */
+    .zoom-indicator {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.8);
+        color: white;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        opacity: 0;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(6px);
+        border: 2px solid rgba(255,255,255,0.2);
+    }
+    
+    .image-item:hover .zoom-indicator {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    
+    /* Animación de carga centrada */
+    .image-loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+    }
+    
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(0,123,255,0.1);
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive Design Mejorado */
+    
+    /* Desktop grande (1200px+) */
+    @media (min-width: 1200px) {
+        .image-gallery {
+            gap: 25px;
+        }
+        
+        .image-item {
+            flex: 0 0 calc(25% - 18.75px);
+            max-width: 320px;
+        }
+    }
+    
+    /* Tablets grandes (992px - 1199px) */
+    @media (max-width: 1199px) and (min-width: 992px) {
+        .image-gallery {
+            gap: 20px;
+        }
+        
+        .image-item {
+            flex: 0 0 calc(25% - 15px);
+            max-width: 280px;
+        }
+    }
+    
+    /* Tablets (768px - 991px) - 2 columnas */
+    @media (max-width: 991px) and (min-width: 768px) {
+        .image-gallery {
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .image-item {
+            flex: 0 0 calc(50% - 10px);
+            max-width: 300px;
+            min-width: 250px;
+        }
+    }
+    
+    /* Móviles grandes (576px - 767px) - 2 columnas más pequeñas */
+    @media (max-width: 767px) and (min-width: 576px) {
+        .image-gallery {
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .image-item {
+            flex: 0 0 calc(50% - 7.5px);
+            max-width: 200px;
+            min-width: 160px;
+        }
+        
+        .image-overlay {
+            padding: 10px 8px 8px;
+            font-size: 0.8rem;
+        }
+        
+        .zoom-indicator {
+            width: 32px;
+            height: 32px;
+            font-size: 12px;
+            top: 10px;
+            right: 10px;
+        }
+    }
+    
+    /* Móviles pequeños (hasta 575px) - 1 columna centrada */
+    @media (max-width: 575px) {
+        .image-gallery {
+            gap: 15px;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .image-item {
+            flex: none;
+            width: 100%;
+            max-width: 280px;
+            min-width: 250px;
+        }
+        
+        .image-overlay {
+            padding: 12px 10px 10px;
+            font-size: 0.85rem;
+        }
+    }
+    
+    /* Modal mejorado */
+    .modal-body img {
+        max-width: 100%;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+    
+    /* Mejoras adicionales para el detalle del producto */
+    .detail-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .detail-section:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-color: rgba(0,123,255,0.2);
+    }
+    
+    .detail-section h5 {
+        color: #495057;
+        border-bottom: 3px solid #dee2e6;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    /* Badges mejorados */
+    .badge {
+        font-size: 0.9em;
+        padding: 0.6em 1em;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    .badge.fs-6 {
+        font-size: 1rem !important;
+        padding: 0.7em 1.2em;
+    }
+    
+    /* Indicadores de stock mejorados */
+    .stock-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stock-critical::before {
+        content: "⚠️";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(220, 53, 69, 0.3));
+    }
+    
+    .stock-low::before {
+        content: "⚡";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
+    }
+    
+    .stock-good::before {
+        content: "✅";
+        font-size: 1.2rem;
+        filter: drop-shadow(0 2px 4px rgba(40, 167, 69, 0.3));
+    }
+    
+    /* Título de la galería con mejor diseño */
+    .card-title {
+        margin-bottom: 2rem;
+        color: #495057;
+        font-weight: 700;
+        font-size: 1.4rem;
+        text-align: center;
+        position: relative;
+    }
+    
+    .card-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border-radius: 2px;
+    }
+    
+    /* Mejora en la tarjeta de la galería */
+    .image-gallery-card {
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    
+    .image-gallery-card .card-body {
+        padding: 2.5rem;
+    }
+    
+    /* Información adicional de la galería */
+    .gallery-info {
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: rgba(0,123,255,0.05);
+        border-radius: 10px;
+        border: 1px solid rgba(0,123,255,0.1);
+    }
+    
+    .gallery-info small {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    /* Efectos de entrada progresivos */
+    .image-item {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    
+    .image-item:nth-child(1) { animation-delay: 0.1s; }
+    .image-item:nth-child(2) { animation-delay: 0.2s; }
+    .image-item:nth-child(3) { animation-delay: 0.3s; }
+    .image-item:nth-child(4) { animation-delay: 0.4s; }
+    
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Scroll horizontal suave en móviles si es necesario */
+    .image-gallery::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .image-gallery::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .image-gallery::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+    }
+    
+    .image-gallery::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-eye me-2"></i>Detalle de Producto
+    </h1>
+    <a href="{% url 'producto_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al listado
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- Información básica -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Información Básica</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Nombre</dt>
+                        <dd class="col-sm-9">{{ producto.nombre }}</dd>
+
+                        <dt class="col-sm-3">Descripción</dt>
+                        <dd class="col-sm-9">
+                            {% if producto.descripcion %}
+                                {{ producto.descripcion }}
+                            {% else %}
+                                <em class="text-muted">Sin descripción</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Códigos -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-barcode me-2"></i>Códigos de Producto</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Código 1</dt>
+                        <dd class="col-sm-9"><span class="badge bg-primary">{{ producto.codigo1 }}</span></dd>
+
+                        {% if producto.codigo2 %}
+                        <dt class="col-sm-3">Código 2</dt>
+                        <dd class="col-sm-9"><span class="badge bg-secondary">{{ producto.codigo2 }}</span></dd>
+                        {% endif %}
+
+                        {% if producto.codigo3 %}
+                        <dt class="col-sm-3">Código 3</dt>
+                        <dd class="col-sm-9"><span class="badge bg-secondary">{{ producto.codigo3 }}</span></dd>
+                        {% endif %}
+
+                        {% if producto.codigo4 %}
+                        <dt class="col-sm-3">Código 4</dt>
+                        <dd class="col-sm-9"><span class="badge bg-secondary">{{ producto.codigo4 }}</span></dd>
+                        {% endif %}
+                    </dl>
+                </div>
+
+                <!-- Precios -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-dollar-sign me-2"></i>Precios</h5>
+                    <dl class="row">
+                        <dt class="col-sm-3">Precio 1</dt>
+                        <dd class="col-sm-9"><span class="badge bg-success fs-6">${{ producto.precio1|floatformat:2 }}</span></dd>
+
+                        {% if producto.precio2 is not None %}
+                        <dt class="col-sm-3">Precio 2</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info fs-6">${{ producto.precio2|floatformat:2 }}</span></dd>
+                        {% endif %}
+
+                        {% if producto.precio3 is not None %}
+                        <dt class="col-sm-3">Precio 3</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info fs-6">${{ producto.precio3|floatformat:2 }}</span></dd>
+                        {% endif %}
+
+                        {% if producto.precio4 is not None %}
+                        <dt class="col-sm-3">Precio 4</dt>
+                        <dd class="col-sm-9"><span class="badge bg-info fs-6">${{ producto.precio4|floatformat:2 }}</span></dd>
+                        {% endif %}
+
+                        <dt class="col-sm-3">Descuento por defecto</dt>
+                        <dd class="col-sm-9">
+                            {% if producto.descuento_por_defecto > 0 %}
+                                <span class="badge bg-warning text-dark">{{ producto.get_descuento_por_defecto_display }}</span>
+                            {% else %}
+                                <span class="text-muted">Sin descuento</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- Información adicional -->
+                <div class="detail-section">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Inventario y Clasificación</h5>
+                    <dl class="row">
+                        <dt class="col-sm-5">Existencias</dt>
+                        <dd class="col-sm-7">
+                            {% if producto.existencias <= 5 %}
+                                <div class="stock-indicator stock-critical">
+                                    <span class="badge bg-danger fs-6">{{ producto.existencias }}</span>
+                                    <small class="text-danger d-block">Stock crítico</small>
+                                </div>
+                            {% elif producto.existencias <= 10 %}
+                                <div class="stock-indicator stock-low">
+                                    <span class="badge bg-warning text-dark fs-6">{{ producto.existencias }}</span>
+                                    <small class="text-warning d-block">Stock bajo</small>
+                                </div>
+                            {% else %}
+                                <div class="stock-indicator stock-good">
+                                    <span class="badge bg-success fs-6">{{ producto.existencias }}</span>
+                                    <small class="text-success d-block">Stock normal</small>
+                                </div>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-5">Categoría</dt>
+                        <dd class="col-sm-7">
+                            {% if producto.categoria %}
+                                <span class="badge bg-outline-primary">{{ producto.categoria.nombre }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin categoría</em>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-5">Proveedor</dt>
+                        <dd class="col-sm-7">
+                            {% if producto.proveedor %}
+                                <span class="badge bg-outline-secondary">{{ producto.proveedor.nombre }}</span>
+                            {% else %}
+                                <em class="text-muted">Sin proveedor</em>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <!-- Acciones -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'producto_update' producto.id %}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Editar Producto
+                    </a>
+                    <a href="{% url 'producto_delete' producto.id %}" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Eliminar Producto
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Galería de imágenes perfectamente alineada -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm image-gallery-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-images me-2"></i>Galería de Imágenes
+                </h5>
+                
+                <div class="image-gallery">
+                    <!-- Imagen 1 -->
+                    <div class="image-item">
+                        {% if producto.imagen1 %}
+                            <div class="image-loading">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <img src="{{ producto.imagen1.url }}" 
+                                 alt="Imagen Principal - {{ producto.nombre }}" 
+                                 class="product-detail-image"
+                                 onclick="showImageModal('{{ producto.imagen1.url }}', '{{ producto.nombre }} - Imagen Principal')"
+                                 onload="handleImageLoad(this)"
+                                 onerror="handleImageError(this)">
+                            <div class="image-placeholder error-placeholder" style="display:none;">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p class="mb-0 small">Error al cargar imagen</p>
+                            </div>
+                            <div class="zoom-indicator">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                            <div class="image-overlay">
+                                <small>Imagen Principal</small>
+                            </div>
+                        {% else %}
+                            <div class="image-placeholder">
+                                <i class="fas fa-image fa-3x mb-3"></i>
+                                <p class="mb-1 fw-bold">Imagen Principal</p>
+                                <small class="text-muted">No disponible</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Imagen 2 -->
+                    <div class="image-item">
+                        {% if producto.imagen2 %}
+                            <div class="image-loading">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <img src="{{ producto.imagen2.url }}" 
+                                 alt="Imagen 2 - {{ producto.nombre }}" 
+                                 class="product-detail-image"
+                                 onclick="showImageModal('{{ producto.imagen2.url }}', '{{ producto.nombre }} - Imagen 2')"
+                                 onload="handleImageLoad(this)"
+                                 onerror="handleImageError(this)">
+                            <div class="image-placeholder error-placeholder" style="display:none;">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p class="mb-0 small">Error al cargar imagen</p>
+                            </div>
+                            <div class="zoom-indicator">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                            <div class="image-overlay">
+                                <small>Vista Alternativa</small>
+                            </div>
+                        {% else %}
+                            <div class="image-placeholder">
+                                <i class="fas fa-image fa-3x mb-3"></i>
+                                <p class="mb-1 fw-bold">Imagen 2</p>
+                                <small class="text-muted">No disponible</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Imagen 3 -->
+                    <div class="image-item">
+                        {% if producto.imagen3 %}
+                            <div class="image-loading">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <img src="{{ producto.imagen3.url }}" 
+                                 alt="Imagen 3 - {{ producto.nombre }}" 
+                                 class="product-detail-image"
+                                 onclick="showImageModal('{{ producto.imagen3.url }}', '{{ producto.nombre }} - Imagen 3')"
+                                 onload="handleImageLoad(this)"
+                                 onerror="handleImageError(this)">
+                            <div class="image-placeholder error-placeholder" style="display:none;">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p class="mb-0 small">Error al cargar imagen</p>
+                            </div>
+                            <div class="zoom-indicator">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                            <div class="image-overlay">
+                                <small>Detalle del Producto</small>
+                            </div>
+                        {% else %}
+                            <div class="image-placeholder">
+                                <i class="fas fa-image fa-3x mb-3"></i>
+                                <p class="mb-1 fw-bold">Imagen 3</p>
+                                <small class="text-muted">No disponible</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Imagen 4 -->
+                    <div class="image-item">
+                        {% if producto.imagen4 %}
+                            <div class="image-loading">
+                                <div class="loading-spinner"></div>
+                            </div>
+                            <img src="{{ producto.imagen4.url }}" 
+                                 alt="Imagen 4 - {{ producto.nombre }}" 
+                                 class="product-detail-image"
+                                 onclick="showImageModal('{{ producto.imagen4.url }}', '{{ producto.nombre }} - Imagen 4')"
+                                 onload="handleImageLoad(this)"
+                                 onerror="handleImageError(this)">
+                            <div class="image-placeholder error-placeholder" style="display:none;">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <p class="mb-0 small">Error al cargar imagen</p>
+                            </div>
+                            <div class="zoom-indicator">
+                                <i class="fas fa-search-plus"></i>
+                            </div>
+                            <div class="image-overlay">
+                                <small>Vista Adicional</small>
+                            </div>
+                        {% else %}
+                            <div class="image-placeholder">
+                                <i class="fas fa-image fa-3x mb-3"></i>
+                                <p class="mb-1 fw-bold">Imagen 4</p>
+                                <small class="text-muted">No disponible</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Información adicional de la galería -->
+                <div class="gallery-info">
+                    <small>
+                        <i class="fas fa-info-circle me-2"></i>
+                        Haz clic en cualquier imagen disponible para verla en tamaño completo
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal mejorado para mostrar imagen ampliada -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="imageModalLabel">Imagen del Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="modalImage" src="" alt="Imagen del producto" class="img-fluid">
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <small class="text-muted">
+                    <i class="fas fa-mouse-pointer me-1"></i>
+                    Haz clic fuera de la imagen o presiona ESC para cerrar
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Función para mostrar imagen en modal con mejoras
+    function showImageModal(imageUrl, productName) {
+        const modalImage = document.getElementById('modalImage');
+        const modalLabel = document.getElementById('imageModalLabel');
+        
+        // Limpiar imagen anterior
+        modalImage.style.opacity = '0';
+        modalImage.src = '';
+        
+        // Configurar nueva imagen
+        modalLabel.textContent = productName;
+        
+        // Precargar imagen antes de mostrar el modal
+        const tempImg = new Image();
+        tempImg.onload = function() {
+            modalImage.src = imageUrl;
+            modalImage.style.opacity = '1';
+            modalImage.style.transition = 'opacity 0.3s ease';
+        };
+        tempImg.onerror = function() {
+            modalLabel.textContent = 'Error al cargar la imagen';
+            modalImage.alt = 'Error al cargar imagen';
+        };
+        tempImg.src = imageUrl;
+        
+        const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+
+    // Función para manejar la carga exitosa de imágenes
+    function handleImageLoad(img) {
+        // Ocultar spinner de carga
+        const loadingSpinner = img.previousElementSibling;
+        if (loadingSpinner && loadingSpinner.classList.contains('image-loading')) {
+            loadingSpinner.style.display = 'none';
+        }
+        
+        // Agregar clase para animación de fade-in
+        img.classList.add('loaded');
+        
+        // Pequeña animación de entrada suave
+        img.style.opacity = '0';
+        setTimeout(() => {
+            img.style.opacity = '1';
+        }, 100);
+    }
+
+    // Función para manejar errores de carga de imágenes
+    function handleImageError(img) {
+        // Ocultar spinner de carga
+        const loadingSpinner = img.previousElementSibling;
+        if (loadingSpinner && loadingSpinner.classList.contains('image-loading')) {
+            loadingSpinner.style.display = 'none';
+        }
+        
+        // Ocultar imagen y mostrar placeholder de error
+        img.style.display = 'none';
+        const errorPlaceholder = img.nextElementSibling;
+        if (errorPlaceholder && errorPlaceholder.classList.contains('error-placeholder')) {
+            errorPlaceholder.style.display = 'flex';
+        }
+    }
+
+    // Inicialización cuando el DOM está listo
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.product-detail-image');
+        
+        // Verificar imágenes que ya se cargaron antes del event listener
+        images.forEach(img => {
+            if (img.complete) {
+                if (img.naturalHeight === 0) {
+                    // Imagen falló al cargar
+                    handleImageError(img);
+                } else {
+                    // Imagen se cargó correctamente
+                    handleImageLoad(img);
+                }
+            }
+        });
+        
+        // Manejo del modal con teclado (ESC para cerrar)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('imageModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            }
+        });
+
+        // Mejorar la experiencia del modal
+        const imageModal = document.getElementById('imageModal');
+        imageModal.addEventListener('shown.bs.modal', function() {
+            // Enfocar el modal para que ESC funcione inmediatamente
+            this.focus();
+        });
+
+        // Limpiar modal al cerrarlo
+        imageModal.addEventListener('hidden.bs.modal', function() {
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = '';
+            modalImage.style.opacity = '0';
+        });
+
+        // Precargar imágenes para mejor rendimiento
+        preloadImages();
+        
+        // Inicializar efectos de entrada
+        initializeGalleryAnimations();
+    });
+
+    // Función para precargar imágenes (mejora la experiencia de usuario)
+    function preloadImages() {
+        const imageUrls = [];
+        const images = document.querySelectorAll('.product-detail-image');
+        
+        images.forEach(img => {
+            if (img.src && !imageUrls.includes(img.src)) {
+                imageUrls.push(img.src);
+            }
+        });
+
+        // Precargar imágenes en segundo plano
+        imageUrls.forEach(url => {
+            const preloadImg = new Image();
+            preloadImg.src = url;
+        });
+    }
+
+    // Función para inicializar animaciones de la galería
+    function initializeGalleryAnimations() {
+        // Observador de intersección para activar animaciones cuando sea visible
+        if ('IntersectionObserver' in window) {
+            const galleryObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-in');
+                        galleryObserver.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            const galleryCard = document.querySelector('.image-gallery-card');
+            if (galleryCard) {
+                galleryObserver.observe(galleryCard);
+            }
+        }
+    }
+
+    // Función para ajustar el layout de la galería dinámicamente
+    function adjustGalleryLayout() {
+        const gallery = document.querySelector('.image-gallery');
+        const items = document.querySelectorAll('.image-item');
+        const windowWidth = window.innerWidth;
+        
+        if (!gallery || !items.length) return;
+        
+        // Ajustar según el tamaño de pantalla
+        if (windowWidth <= 575) {
+            // Móviles muy pequeños - 1 columna
+            gallery.style.flexDirection = 'column';
+            gallery.style.alignItems = 'center';
+            items.forEach(item => {
+                item.style.width = '100%';
+                item.style.maxWidth = '280px';
+                item.style.minWidth = '250px';
+            });
+        } else if (windowWidth <= 767) {
+            // Móviles grandes - 2 columnas
+            gallery.style.flexDirection = 'row';
+            gallery.style.flexWrap = 'wrap';
+            gallery.style.justifyContent = 'center';
+            items.forEach(item => {
+                item.style.width = 'calc(50% - 7.5px)';
+                item.style.maxWidth = '200px';
+                item.style.minWidth = '160px';
+            });
+        } else if (windowWidth <= 991) {
+            // Tablets - 2 columnas más grandes
+            gallery.style.flexDirection = 'row';
+            gallery.style.flexWrap = 'wrap';
+            gallery.style.justifyContent = 'center';
+            items.forEach(item => {
+                item.style.width = 'calc(50% - 10px)';
+                item.style.maxWidth = '300px';
+                item.style.minWidth = '250px';
+            });
+        } else {
+            // Desktop - 4 columnas
+            gallery.style.flexDirection = 'row';
+            gallery.style.flexWrap = 'nowrap';
+            gallery.style.justifyContent = 'center';
+            items.forEach(item => {
+                item.style.width = 'calc(25% - 15px)';
+                item.style.maxWidth = windowWidth >= 1200 ? '320px' : '280px';
+                item.style.minWidth = '200px';
+            });
+        }
+    }
+
+    // Ejecutar ajuste en redimensionado de ventana con debounce
+    window.addEventListener('resize', debounce(adjustGalleryLayout, 250));
+
+    // Función debounce para optimizar el resize
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Lazy loading mejorado para navegadores que no soportan loading="lazy"
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px' // Comenzar a cargar cuando esté 50px antes de ser visible
+        });
+        
+        // Observar imágenes con data-src (para lazy loading)
+        document.querySelectorAll('img[data-src]').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    // Función para mejorar la accesibilidad
+    function enhanceAccessibility() {
+        const images = document.querySelectorAll('.product-detail-image');
+        
+        images.forEach(img => {
+            // Agregar atributos ARIA para mejor accesibilidad
+            img.setAttribute('role', 'button');
+            img.setAttribute('tabindex', '0');
+            
+            // Manejar eventos de teclado para accesibilidad
+            img.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    img.click();
+                }
+            });
+            
+            // Mejorar el focus visible
+            img.addEventListener('focus', function() {
+                this.style.outline = '3px solid #007bff';
+                this.style.outlineOffset = '2px';
+            });
+            
+            img.addEventListener('blur', function() {
+                this.style.outline = 'none';
+            });
+        });
+    }
+
+    // Función para manejar errores globales de imágenes
+    function setupGlobalImageErrorHandling() {
+        window.addEventListener('error', function(e) {
+            if (e.target.tagName === 'IMG' && e.target.classList.contains('product-detail-image')) {
+                handleImageError(e.target);
+            }
+        }, true);
+    }
+
+    // Inicializar mejoras adicionales
+    document.addEventListener('DOMContentLoaded', function() {
+        enhanceAccessibility();
+        setupGlobalImageErrorHandling();
+        adjustGalleryLayout(); // Ajuste inicial
+    });
+
+    // Performance monitoring para la galería
+    function measureGalleryPerformance() {
+        if ('performance' in window && 'mark' in performance) {
+            performance.mark('gallery-start');
+            
+            const images = document.querySelectorAll('.product-detail-image');
+            let loadedImages = 0;
+            
+            images.forEach(img => {
+                if (img.complete) {
+                    loadedImages++;
+                } else {
+                    img.addEventListener('load', function() {
+                        loadedImages++;
+                        if (loadedImages === images.length) {
+                            performance.mark('gallery-end');
+                            performance.measure('gallery-load-time', 'gallery-start', 'gallery-end');
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // Ejecutar medición de performance
+    document.addEventListener('DOMContentLoaded', measureGalleryPerformance);
+</script>
+{% endblock %}

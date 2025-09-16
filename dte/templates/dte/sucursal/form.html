@@ -1,0 +1,177 @@
+{% extends 'productos/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-store me-2"></i>{{ titulo }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Información Básica -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label required">
+                                        {{ form.nombre.label }}
+                                    </label>
+                                    {{ form.nombre }}
+                                    {% if form.nombre.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.nombre.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.codigo.id_for_label }}" class="form-label required">
+                                        {{ form.codigo.label }}
+                                    </label>
+                                    {{ form.codigo }}
+                                    {% if form.codigo.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codigo.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Código único para identificar la sucursal</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Códigos de Establecimiento -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-building me-1"></i>Códigos de Establecimiento
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.codEstableMH.id_for_label }}" class="form-label required">
+                                        {{ form.codEstableMH.label }}
+                                    </label>
+                                    {{ form.codEstableMH }}
+                                    {% if form.codEstableMH.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codEstableMH.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Código asignado por el Ministerio de Hacienda</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.codEstable.id_for_label }}" class="form-label required">
+                                        {{ form.codEstable.label }}
+                                    </label>
+                                    {{ form.codEstable }}
+                                    {% if form.codEstable.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codEstable.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Código interno del establecimiento (ej: 0001)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Códigos de Punto de Venta -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-cash-register me-1"></i>Códigos de Punto de Venta
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.codPuntoVentaMH.id_for_label }}" class="form-label required">
+                                        {{ form.codPuntoVentaMH.label }}
+                                    </label>
+                                    {{ form.codPuntoVentaMH }}
+                                    {% if form.codPuntoVentaMH.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codPuntoVentaMH.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Código de punto de venta asignado por MH</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.codPuntoVenta.id_for_label }}" class="form-label required">
+                                        {{ form.codPuntoVenta.label }}
+                                    </label>
+                                    {{ form.codPuntoVenta }}
+                                    {% if form.codPuntoVenta.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.codPuntoVenta.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Código interno del punto de venta (ej: 0001)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.activa }}
+                                        <label class="form-check-label" for="{{ form.activa.id_for_label }}">
+                                            {{ form.activa.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.activa.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.activa.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Solo las sucursales activas pueden ser asignadas a usuarios</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'dte:sucursal_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i>Volver
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Guardar Sucursal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.required::after {
+    content: " *";
+    color: red;
+}
+</style>
+{% endblock %}

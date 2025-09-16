@@ -1,0 +1,285 @@
+<!-- templates/dte/anulacion/anulacion_form.html -->
+{% extends "productos/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Anular {{ documento.identificacion.numeroControl }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.info-documento {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #0d6efd;
+}
+.form-section {
+    border-left: 3px solid #dc3545;
+    background-color: #fff5f5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-ban text-danger me-2"></i>
+            Anular Documento
+        </h1>
+        <div>
+            <a href="{% url 'dte:anulacion_crear' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-chevron-left me-1"></i>Volver
+            </a>
+            <a href="{% url 'dte:factura_detail' documento.pk %}" class="btn btn-outline-primary">
+                <i class="fas fa-eye me-1"></i>Ver Documento
+            </a>
+        </div>
+    </div>
+
+    <!-- Información del documento -->
+    <div class="card info-documento mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-file-invoice me-2"></i>
+                Documento a Anular
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Número de Control:</strong><br>
+                    <code>{{ documento.identificacion.numeroControl }}</code>
+                </div>
+                <div class="col-md-3">
+                    <strong>Tipo de DTE:</strong><br>
+                    <span class="badge bg-info">{{ documento.identificacion.tipoDte.texto }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Fecha de Emisión:</strong><br>
+                    {{ documento.identificacion.fecEmi|date:"d/m/Y" }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Estado Actual:</strong><br>
+                    {% if documento.estado_hacienda == 'ACEPTADO' %}
+                        <span class="badge bg-success">{{ documento.estado_hacienda }}</span>
+                    {% elif documento.estado_hacienda == 'ACEPTADO_CON_OBSERVACIONES' %}
+                        <span class="badge bg-warning">ACEPTADO CON OBS.</span>
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Receptor:</strong><br>
+                    {{ documento.receptor.nombre }}<br>
+                    <small class="text-muted">{{ documento.receptor.tipoDocumento.texto }}: {{ documento.receptor.numDocumento }}</small>
+                </div>
+                <div class="col-md-3">
+                    <strong>Total del Documento:</strong><br>
+                    <span class="h5 text-primary">${{ documento.resumen.totalPagar|floatformat:2 }}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Sello de Recepción:</strong><br>
+                    {% if documento.sello_recepcion %}
+                        <i class="fas fa-certificate text-success me-1"></i>
+                        <small>{{ documento.sello_recepcion|slice:":10" }}...</small>
+                    {% else %}
+                        <span class="text-muted">Sin sello</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de anulación -->
+    <div class="card form-section">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-edit me-2"></i>
+                Datos de la Anulación
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Importante:</strong> Esta acción anulará definitivamente el documento. 
+                Una vez procesada la anulación en Hacienda, no se puede revertir.
+            </div>
+
+            <form method="post" novalidate id="anulacionForm">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-lg-6">
+                        <h6 class="text-danger mb-3">
+                            <i class="fas fa-cog me-2"></i>Configuración
+                        </h6>
+                        
+                        {{ form.ambiente|as_crispy_field }}
+                        {{ form.motivo_anulacion|as_crispy_field }}
+                    </div>
+                    
+                    <!-- Columna derecha -->
+                    <div class="col-lg-6">
+                        <h6 class="text-danger mb-3">
+                            <i class="fas fa-users me-2"></i>Responsables
+                        </h6>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Responsable de la Anulación</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ form.nombre_responsable|as_crispy_field }}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.tipo_doc_responsable|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.num_doc_responsable|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Solicitante de la Anulación</h6>
+                            </div>
+                            <div class="card-body">
+                                {{ form.nombre_solicita|as_crispy_field }}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.tipo_doc_solicita|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.num_doc_solicita|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{% url 'dte:anulacion_crear' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>Cancelar
+                                </a>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-danger" 
+                                        onclick="return confirmarAnulacion()"
+                                        id="btnProcesarAnulacion">
+                                    <i class="fas fa-ban me-1"></i>
+                                    Procesar Anulación
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Proceso de Anulación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li>Se genera el documento de anulación</li>
+                        <li>Se firma electrónicamente</li>
+                        <li>Se envía a Hacienda para procesamiento</li>
+                        <li>Hacienda valida y procesa la anulación</li>
+                        <li>Se recibe confirmación o rechazo</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Consideraciones Importantes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>La anulación es <strong>irreversible</strong></li>
+                        <li>El documento perderá validez fiscal</li>
+                        <li>Se debe especificar un motivo claro</li>
+                        <li>Los datos de responsables son obligatorios</li>
+                        <li>El proceso puede tomar algunos minutos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmarAnulacion() {
+    const motivo = document.querySelector('#id_motivo_anulacion').value.trim();
+    const responsable = document.querySelector('#id_nombre_responsable').value.trim();
+    const solicita = document.querySelector('#id_nombre_solicita').value.trim();
+    
+    if (!motivo || !responsable || !solicita) {
+        alert('Por favor complete todos los campos obligatorios.');
+        return false;
+    }
+    
+    const confirmacion = confirm(
+        `¿Está seguro que desea anular el documento {{ documento.identificacion.numeroControl }}?\n\n` +
+        `Motivo: ${motivo}\n\n` +
+        `Esta acción NO se puede revertir una vez procesada en Hacienda.`
+    );
+    
+    if (confirmacion) {
+        // Deshabilitar el botón para evitar doble envío
+        const btn = document.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Procesando...';
+        
+        // Enviar el formulario
+        document.getElementById('anulacionForm').submit();
+        
+        return true;
+    }
+    
+    return false;
+}
+
+// Validación en tiempo real del motivo
+document.addEventListener('DOMContentLoaded', function() {
+    const motivoField = document.querySelector('#id_motivo_anulacion');
+    if (motivoField) {
+        motivoField.addEventListener('input', function() {
+            const length = this.value.trim().length;
+            const minLength = 5;
+            
+            if (length > 0 && length < minLength) {
+                this.classList.add('is-invalid');
+                this.setCustomValidity(`Mínimo ${minLength} caracteres`);
+            } else {
+                this.classList.remove('is-invalid');
+                this.setCustomValidity('');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

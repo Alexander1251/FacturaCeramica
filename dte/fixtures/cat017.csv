@@ -1,0 +1,13 @@
+codigo,texto
+01,Billetes y monedas
+02,Tarjeta Débito
+03,Tarjeta Crédito
+04,Cheque
+05,Transferencia-Depósito Bancario
+08,Dinero electrónico
+09,Monedero electrónico
+11,Bitcoin
+12,Otras Criptomonedas
+13,Cuentas por pagar del receptor
+14,Giro bancario
+99,Otros (se debe indicar el medio de pago)

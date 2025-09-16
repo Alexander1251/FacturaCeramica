@@ -1,0 +1,68 @@
+{% extends 'productos/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ titulo }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        <strong>¡Atención!</strong> Esta acción no se puede deshacer.
+                    </div>
+                    
+                    <p class="mb-4">¿Está seguro que desea eliminar la sucursal:</p>
+                    
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ sucursal.nombre }}</h5>
+                            <p class="card-text">
+                                <strong>Código:</strong> {{ sucursal.codigo }}<br>
+                                <strong>Establecimiento:</strong> {{ sucursal.codEstable }}<br>
+                                <strong>Punto de Venta:</strong> {{ sucursal.codPuntoVenta }}<br>
+                                <strong>Estado:</strong> 
+                                {% if sucursal.activa %}
+                                    <span class="badge bg-success">Activa</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactiva</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="text-danger">
+                            <i class="fas fa-exclamation-circle me-1"></i>Consecuencias de eliminar esta sucursal:
+                        </h6>
+                        <ul class="text-muted">
+                            <li>Los usuarios asignados a esta sucursal quedarán sin sucursal</li>
+                            <li>Las facturas existentes mantendrán la referencia a esta sucursal</li>
+                            <li>No se podrán crear nuevas facturas con estos códigos</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'dte:sucursal_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>Eliminar Sucursal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+<!-- templates/dte/anulacion/anulacion_crear.html -->
+{% extends "productos/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Crear Anulación{% endblock %}
+
+{% block extra_css %}
+<style>
+.documento-card {
+    transition: all 0.2s;
+}
+.documento-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.estado-badge {
+    font-size: 0.7rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-ban text-danger me-2"></i>
+            Crear Anulación de Documento
+        </h1>
+        <a href="{% url 'dte:anulacion_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-chevron-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <!-- Formulario de búsqueda -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-search me-2"></i>
+                Buscar Documento a Anular
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Nota:</strong> Solo se pueden anular documentos con estado 
+                <span class="badge bg-success">ACEPTADO</span> o 
+                <span class="badge bg-success">ACEPTADO CON OBSERVACIONES</span>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        {{ buscar_form.tipo_busqueda|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ buscar_form.termino_busqueda|as_crispy_field }}
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resultados de búsqueda -->
+    {% if documentos_encontrados %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Documentos Encontrados ({{ documentos_encontrados|length }})
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for documento in documentos_encontrados %}
+                <div class="col-lg-6 col-xl-4 mb-3">
+                    <div class="card documento-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">
+                                    {{ documento.identificacion.numeroControl }}
+                                </h6>
+                                <span class="badge bg-info estado-badge">
+                                    {{ documento.identificacion.tipoDte.texto }}
+                                </span>
+                            </div>
+                            
+                            <p class="card-text">
+                                <strong>Receptor:</strong><br>
+                                <small>{{ documento.receptor.nombre|truncatechars:40 }}</small>
+                            </p>
+                            
+                            <div class="row text-center mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Fecha</small><br>
+                                    <small>{{ documento.identificacion.fecEmi|date:"d/m/Y" }}</small>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Total</small><br>
+                                    <small><strong>${{ documento.resumen.totalPagar|floatformat:2 }}</strong></small>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-2">
+                                {% if documento.estado_hacienda == 'ACEPTADO' %}
+                                    <span class="badge bg-success">{{ documento.estado_hacienda }}</span>
+                                {% elif documento.estado_hacienda == 'ACEPTADO CON OBSERVACIONES' %}
+                                    <span class="badge bg-warning">ACEPTADO CON OBS.</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'dte:anulacion_documento' documento.pk %}" 
+                                   class="btn btn-danger btn-sm">
+                                    <i class="fas fa-ban me-1"></i>Anular Documento
+                                </a>
+                                <a href="{% url 'dte:factura_detail' documento.pk %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Ver Detalle
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% elif request.method == 'POST' %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No se encontraron documentos</h5>
+            <p class="text-muted">
+                Intente con otros criterios de búsqueda o verifique que el documento 
+                tenga estado ACEPTADO.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Información adicional -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Condiciones para Anulación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success me-2"></i>Documento con estado ACEPTADO</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Documento con estado ACEPTADO CON OBSERVACIONES</li>
+                        <li><i class="fas fa-times text-danger me-2"></i>No debe estar previamente anulado</li>
+                        <li><i class="fas fa-times text-danger me-2"></i>No puede estar en estado RECHAZADO</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Tipos de Anulación
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><strong>Tipo 2 (Sin Reemplazo):</strong></li>
+                        <li class="text-muted">• Anulación definitiva del documento</li>
+                        <li class="text-muted">• No requiere documento de reemplazo</li>
+                        <li class="text-muted">• El documento queda invalidado</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

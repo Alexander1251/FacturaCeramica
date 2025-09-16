@@ -1,0 +1,75 @@
+{% extends 'productos/base.html' %}
+{% block title %}Acceso Denegado{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cuenta Sin Permisos de Acceso
+                </h4>
+            </div>
+            <div class="card-body text-center p-5">
+                <div class="mb-4">
+                    <i class="fas fa-user-lock fa-4x text-warning"></i>
+                </div>
+                
+                <h5 class="mb-3">Su cuenta está registrada pero sin permisos de acceso</h5>
+                
+                <p class="text-muted mb-4">
+                    Ha iniciado sesión correctamente, pero su cuenta no tiene los permisos necesarios 
+                    para acceder a las funcionalidades del sistema.
+                </p>
+                
+                <div class="alert alert-info">
+                    <strong><i class="fas fa-info-circle me-2"></i>Estado de su cuenta:</strong><br>
+                    <div class="mt-2">
+                        <strong>Usuario:</strong> {{ user.username }}<br>
+                        <strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}<br>
+                        <strong>Email:</strong> {{ user.email }}<br>
+                        <strong>Rol actual:</strong> 
+                        {% if user.rol %}
+                            <span class="badge bg-secondary">{{ user.rol.nombre }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">Sin rol asignado</span>
+                        {% endif %}
+                        <br>
+                        <strong>Estado:</strong> 
+                        {% if user.activo %}
+                            <span class="badge bg-success">Activo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inactivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i>¿Qué necesita?</strong><br>
+                    Un administrador debe:
+                    <ul class="text-start mt-2 mb-0">
+                        <li>Activar su cuenta (marcar como activo)</li>
+                        <li>Asignarle el rol de "administrador"</li>
+                    </ul>
+                </div>
+                
+                <p class="text-muted">
+                    <strong>Contacte al administrador del sistema para solicitar los permisos necesarios.</strong>
+                </p>
+            </div>
+            <div class="card-footer text-center">
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                    </button>
+                </form>
+                <button onclick="location.reload()" class="btn btn-outline-primary ms-2">
+                    <i class="fas fa-sync me-2"></i>Verificar Estado
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

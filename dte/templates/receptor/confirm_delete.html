@@ -1,0 +1,187 @@
+{% extends 'productos/base.html' %}
+
+{% block title %}Eliminar Receptor | Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title">
+        <i class="fas fa-trash me-2"></i>Eliminar Receptor
+    </h1>
+    <a href="{% url 'dte:receptor_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al listado
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="fas fa-exclamation-triangle me-2"></i>Confirmación necesaria
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">¿Está seguro que desea eliminar este receptor?</h5>
+                <div class="d-flex align-items-center mb-3 p-3 bg-light rounded">
+                    <div class="bg-primary text-white rounded p-3 me-3">
+                        <i class="fas fa-user fa-2x"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">{{ object.nombre|default:"Sin nombre" }}</h6>
+                        <small class="text-muted">
+                            {% if object.tipoDocumento %}
+                                Tipo: {{ object.tipoDocumento.texto }} | 
+                            {% endif %}
+                            {% if object.numDocumento %}
+                                Documento: {{ object.numDocumento }} | 
+                            {% endif %}
+                            {% if object.correo %}
+                                Email: {{ object.correo }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                
+                <p class="card-text">
+                    Esta acción eliminará permanentemente el receptor y no podrá ser recuperado.
+                </p>
+                
+                <!-- Verificar si tiene facturas asociadas -->
+                {% if object.facturas.exists %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>¡Atención!</strong> Este receptor tiene {{ object.facturas.count }} factura(s) asociada(s). 
+                        No se puede eliminar un receptor que tiene facturas registradas.
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-3">
+                        <a href="{% url 'dte:receptor_list' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al listado
+                        </a>
+                        <a href="{% url 'dte:receptor_detail' object.id %}" class="btn btn-primary">
+                            <i class="fas fa-eye me-2"></i>Ver detalles
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nota:</strong> Esta acción es irreversible. Asegúrese de que realmente desea eliminar este receptor.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end mt-3">
+                            <a href="{% url 'dte:receptor_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Eliminar
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Información adicional del receptor -->
+        {% if object.tipoDocumento or object.departamento or object.correo %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información del Receptor
+                </h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    {% if object.tipoDocumento %}
+                    <dt class="col-sm-4">Tipo de Documento:</dt>
+                    <dd class="col-sm-8">{{ object.tipoDocumento.texto }}</dd>
+                    {% endif %}
+                    
+                    {% if object.numDocumento %}
+                    <dt class="col-sm-4">Número:</dt>
+                    <dd class="col-sm-8">{{ object.numDocumento }}</dd>
+                    {% endif %}
+                    
+                    {% if object.nrc %}
+                    <dt class="col-sm-4">NRC:</dt>
+                    <dd class="col-sm-8">{{ object.nrc }}</dd>
+                    {% endif %}
+                    
+                    {% if object.codActividad %}
+                    <dt class="col-sm-4">Actividad:</dt>
+                    <dd class="col-sm-8">{{ object.codActividad.texto }}</dd>
+                    {% endif %}
+                    
+                    {% if object.departamento %}
+                    <dt class="col-sm-4">Ubicación:</dt>
+                    <dd class="col-sm-8">
+                        {{ object.departamento.texto }}
+                        {% if object.municipio %}, {{ object.municipio.texto }}{% endif %}
+                    </dd>
+                    {% endif %}
+                    
+                    {% if object.telefono %}
+                    <dt class="col-sm-4">Teléfono:</dt>
+                    <dd class="col-sm-8">{{ object.telefono }}</dd>
+                    {% endif %}
+                    
+                    {% if object.correo %}
+                    <dt class="col-sm-4">Correo:</dt>
+                    <dd class="col-sm-8">{{ object.correo }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Mostrar facturas asociadas si las hay -->
+        {% if object.facturas.exists %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>Facturas Asociadas ({{ object.facturas.count }})
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Número de Control</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for factura in object.facturas.all|slice:":5" %}
+                            <tr>
+                                <td>
+                                    <small>{{ factura.identificacion.numeroControl }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ factura.identificacion.fecEmi }}</small>
+                                </td>
+                                <td>
+                                    <small>${{ factura.resumen.totalPagar|floatformat:2 }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if factura.estado_hacienda == 'ACEPTADO' %}success{% elif factura.estado_hacienda == 'RECHAZADO' %}danger{% else %}warning{% endif %} badge-sm">
+                                        {{ factura.get_estado_hacienda_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if object.facturas.count > 5 %}
+                    <small class="text-muted">
+                        Mostrando las primeras 5 de {{ object.facturas.count }} facturas...
+                    </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

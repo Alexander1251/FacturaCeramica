@@ -1,0 +1,510 @@
+<!-- templates/dte/anulacion/anulacion_detail.html -->
+{% extends "productos/base.html" %}
+{% load humanize %}
+
+{% block title %}Anulación {{ anulacion.codigo_generacion|slice:":8" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.codigo-generacion {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* Estilos para estados - ESPECÍFICOS Y CON ALTA PRIORIDAD */
+span.badge.estado-ACEPTADO, 
+.badge.estado-ACEPTADO,
+.fs-6.estado-ACEPTADO { 
+    background-color: #198754 !important; 
+    color: white !important;
+}
+
+span.badge.estado-RECHAZADO,
+.badge.estado-RECHAZADO,
+.fs-6.estado-RECHAZADO { 
+    background-color: #dc3545 !important; 
+    color: white !important;
+}
+
+span.badge.estado-PENDIENTE,
+.badge.estado-PENDIENTE,
+.fs-6.estado-PENDIENTE { 
+    background-color: #6c757d !important; 
+    color: white !important;
+}
+
+span.badge.estado-ERROR,
+.badge.estado-ERROR,
+.fs-6.estado-ERROR { 
+    background-color: #fd7e14 !important; 
+    color: white !important;
+}
+
+span.badge.estado-ENVIADO,
+.badge.estado-ENVIADO,
+.fs-6.estado-ENVIADO { 
+    background-color: #0d6efd !important; 
+    color: white !important;
+}
+
+/* Asegurar que los estilos se apliquen en el header */
+.page-title + div .badge {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Estilos para la tabla de información */
+.table .badge {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.8rem !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-title mb-1">
+                <i class="fas fa-ban text-danger me-2"></i>
+                Detalle de Anulación
+            </h1>
+            <div class="d-flex align-items-center gap-3">
+                {% if anulacion.estado == 'ACEPTADO' %}
+                    <span class="badge fs-6" style="background-color: #198754 !important; color: white !important; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-check-circle me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% elif anulacion.estado == 'RECHAZADO' %}
+                    <span class="badge fs-6" style="background-color: #dc3545 !important; color: white !important; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-times-circle me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% elif anulacion.estado == 'PENDIENTE' %}
+                    <span class="badge fs-6" style="background-color: #6c757d !important; color: white !important; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-clock me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% elif anulacion.estado == 'ERROR' %}
+                    <span class="badge fs-6" style="background-color: #fd7e14 !important; color: white !important; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-exclamation-triangle me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% elif anulacion.estado == 'ENVIADO' %}
+                    <span class="badge fs-6" style="background-color: #0d6efd !important; color: white !important; padding: 0.5rem 0.75rem;">
+                        <i class="fas fa-paper-plane me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% else %}
+                    <span class="badge bg-secondary fs-6">
+                        <i class="fas fa-info-circle me-1"></i>{{ anulacion.get_estado_display }}
+                    </span>
+                {% endif %}
+                
+                {% if anulacion.sello_recepcion %}
+                <span class="badge bg-success fs-6">
+                    <i class="fas fa-certificate me-1"></i>Con Sello de Recepción
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'dte:anulacion_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-chevron-left me-1"></i>Volver
+            </a>
+            {% if anulacion.estado == 'RECHAZADO' or anulacion.estado == 'ERROR' %}
+            <button class="btn btn-warning" onclick="reenviarAnulacion({{ anulacion.pk }})">
+                <i class="fas fa-redo me-1"></i>Reenviar
+            </button>
+            {% endif %}
+            <button class="btn btn-info" onclick="consultarEstado({{ anulacion.pk }})">
+                <i class="fas fa-sync me-1"></i>Consultar Estado
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información principal -->
+        <div class="col-lg-8">
+            <!-- Datos de la anulación -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información de la Anulación
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">Código de Generación:</td>
+                                    <td>
+                                        <div class="codigo-generacion">
+                                            {{ anulacion.codigo_generacion }}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Fecha de Anulación:</td>
+                                    <td>{{ anulacion.fecha_anulacion|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Hora de Anulación:</td>
+                                    <td>{{ anulacion.hora_anulacion|time:"H:i:s" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Ambiente:</td>
+                                    <td>
+                                        <span class="badge {% if anulacion.ambiente.codigo == '00' %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ anulacion.ambiente.texto }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Tipo de Anulación:</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            Tipo {{ anulacion.tipo_anulacion }} - Sin Documento de Reemplazo
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">Estado de la Anulación:</td>
+                                    <td>
+                                        {% if anulacion.estado == 'ACEPTADO' %}
+                                            <span class="badge" style="background-color: #198754 !important; color: white !important; padding: 0.4rem 0.6rem;">
+                                                <i class="fas fa-check-circle me-1"></i>{{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% elif anulacion.estado == 'RECHAZADO' %}
+                                            <span class="badge" style="background-color: #dc3545 !important; color: white !important; padding: 0.4rem 0.6rem;">
+                                                <i class="fas fa-times-circle me-1"></i>{{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% elif anulacion.estado == 'PENDIENTE' %}
+                                            <span class="badge" style="background-color: #6c757d !important; color: white !important; padding: 0.4rem 0.6rem;">
+                                                <i class="fas fa-clock me-1"></i>{{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% elif anulacion.estado == 'ERROR' %}
+                                            <span class="badge" style="background-color: #fd7e14 !important; color: white !important; padding: 0.4rem 0.6rem;">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% elif anulacion.estado == 'ENVIADO' %}
+                                            <span class="badge" style="background-color: #0d6efd !important; color: white !important; padding: 0.4rem 0.6rem;">
+                                                <i class="fas fa-paper-plane me-1"></i>{{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                {{ anulacion.get_estado_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if anulacion.sello_recepcion %}
+                                <tr>
+                                    <td class="fw-bold">Sello de Recepción:</td>
+                                    <td>
+                                        {% if anulacion.sello_recepcion|slice:":4" == "TEST" %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-flask me-1"></i>SELLO DE PRUEBA
+                                            </span>
+                                            <br><code class="text-muted">{{ anulacion.sello_recepcion }}</code>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-certificate me-1"></i>SELLO OFICIAL
+                                            </span>
+                                            <br><code>{{ anulacion.sello_recepcion }}</code>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if anulacion.fecha_procesamiento %}
+                                <tr>
+                                    <td class="fw-bold">Fecha de Procesamiento:</td>
+                                    <td>{{ anulacion.fecha_procesamiento|date:"d/m/Y H:i:s" }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td class="fw-bold">Creado el:</td>
+                                    <td>{{ anulacion.creado_en|date:"d/m/Y H:i:s" }}</td>
+                                </tr>
+                                {% if anulacion.creado_por %}
+                                <tr>
+                                    <td class="fw-bold">Creado por:</td>
+                                    <td>{{ anulacion.creado_por }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documento anulado -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        Documento Anulado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">Número de Control:</td>
+                                    <td>
+                                        <a href="{% url 'dte:factura_detail' anulacion.documento_anular.pk %}" 
+                                           class="text-decoration-none">
+                                            {{ anulacion.documento_anular.identificacion.numeroControl }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Tipo de DTE:</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ anulacion.documento_anular.identificacion.tipoDte.texto }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Fecha de Emisión:</td>
+                                    <td>{{ anulacion.documento_anular.identificacion.fecEmi|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Receptor:</td>
+                                    <td>{{ anulacion.documento_anular.receptor.nombre }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td class="fw-bold">Total del Documento:</td>
+                                    <td>
+                                        <span class="h6 text-primary">
+                                            ${{ anulacion.documento_anular.resumen.totalPagar|floatformat:2 }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Estado Actual:</td>
+                                    <td>
+                                        {% if anulacion.documento_anular.estado_hacienda == 'ANULADO' %}
+                                            <span class="badge bg-danger">ANULADO</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ anulacion.documento_anular.estado_hacienda }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Sello Original:</td>
+                                    <td>
+                                        {% if anulacion.documento_anular.sello_recepcion %}
+                                            <code>{{ anulacion.documento_anular.sello_recepcion|slice:":15" }}...</code>
+                                        {% else %}
+                                            <span class="text-muted">Sin sello</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivo y responsables -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Motivo y Responsables
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="fw-bold">Motivo de la Anulación:</h6>
+                        <p class="mb-0">{{ anulacion.motivo_anulacion }}</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Responsable de la Anulación:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Nombre:</strong> {{ anulacion.nombre_responsable }}</li>
+                                <li><strong>Tipo de Documento:</strong> {{ anulacion.get_tipo_doc_responsable_display }}</li>
+                                <li><strong>Número:</strong> {{ anulacion.num_doc_responsable }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Solicitante de la Anulación:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Nombre:</strong> {{ anulacion.nombre_solicita }}</li>
+                                <li><strong>Tipo de Documento:</strong> {{ anulacion.get_tipo_doc_solicita_display }}</li>
+                                <li><strong>Número:</strong> {{ anulacion.num_doc_solicita }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <!-- Estado y acciones -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Acciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'dte:factura_detail' anulacion.documento_anular.pk %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i>Ver Documento Original
+                        </a>
+                        
+                        {% if anulacion.estado == 'RECHAZADO' or anulacion.estado == 'ERROR' %}
+                        <button class="btn btn-warning" onclick="reenviarAnulacion({{ anulacion.pk }})">
+                            <i class="fas fa-redo me-1"></i>Reenviar a Hacienda
+                        </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-info" onclick="consultarEstado({{ anulacion.pk }})">
+                            <i class="fas fa-sync me-1"></i>Consultar Estado
+                        </button>
+                        
+                        {% if anulacion.respuesta_hacienda %}
+                        <button class="btn btn-outline-secondary" onclick="verRespuestaCompleta()">
+                            <i class="fas fa-code me-1"></i>Ver Respuesta JSON
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            {% if anulacion.observaciones %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Observaciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-0">
+                        {{ anulacion.observaciones }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Información técnica -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información Técnica
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td><strong>UUID Completo:</strong></td>
+                                <td class="text-break">
+                                    <code style="font-size: 0.7rem;">{{ anulacion.codigo_generacion }}</code>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Última Actualización:</strong></td>
+                                <td>{{ anulacion.actualizado_en|date:"d/m/Y H:i:s" }}</td>
+                            </tr>
+                        </table>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para respuesta JSON -->
+{% if anulacion.respuesta_hacienda %}
+<div class="modal fade" id="modalRespuestaJSON" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Respuesta Completa de Hacienda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre><code class="json">{{ anulacion.respuesta_hacienda|pprint }}</code></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function reenviarAnulacion(anulacionId) {
+    if (!confirm('¿Está seguro que desea reenviar esta anulación a Hacienda?')) {
+        return;
+    }
+    
+    fetch(`/dte/anulaciones/${anulacionId}/reenviar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Anulación reenviada exitosamente: ' + data.message);
+            location.reload();
+        } else {
+            alert('Error al reenviar: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error de red: ' + error);
+    });
+}
+
+function consultarEstado(anulacionId) {
+    fetch(`/dte/anulaciones/${anulacionId}/consultar-estado/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Estado en Hacienda: ${data.estado_hacienda}\n${data.descripcion}`);
+        } else {
+            alert('Error al consultar: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error de red: ' + error);
+    });
+}
+
+function verRespuestaCompleta() {
+    const modal = new bootstrap.Modal(document.getElementById('modalRespuestaJSON'));
+    modal.show();
+}
+</script>
+{% endblock %}
