@@ -154,12 +154,12 @@ CONTINGENCIA_CONFIG = {
 }
 
 # Credenciales para autenticación con Hacienda
-DTE_USER = '09061804791010'  # Tu NIT de emisor registrado
-DTE_PASSWORD = 'Genesis_$2025'  # Tu contraseña del sistema de Hacienda
+DTE_USER = '06032509661015'  # Tu NIT de emisor registrado
+DTE_PASSWORD = 'Gmda250966$'  # Tu contraseña del sistema de Hacienda
 ANULACION_SCHEMA_PATH = BASE_DIR / "dte" / "schemas" / "anulacion-schema-v2.json"
 # Configuración del firmador electrónico
 FIRMADOR_URL = 'http://localhost:8113/firmardocumento/'
-DTE_CERTIFICADO_PASSWORD = 'CeramicaS_2025'  # Contraseña del certificado digital
+DTE_CERTIFICADO_PASSWORD = 'maam26082025$'  # Contraseña del certificado digital
 ANULACION_CONFIG = {
     'TIPOS_DOCUMENTO_PERSONA': [
         ('36', 'NIT'),
