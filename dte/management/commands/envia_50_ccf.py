@@ -16,7 +16,7 @@ from dte.models import (
     Emisor, FacturaElectronica, Identificacion, Receptor, CuerpoDocumentoItem, 
     Resumen, TipoDocumento, AmbienteDestino, ModeloFacturacion, 
     TipoTransmision, UnidadMedida, CondicionOperacion, TipoItem, 
-    Tributo, TributoResumen, TipoDocReceptor
+    Tributo, TributoResumen, TipoDocReceptor, Sucursal  
 )
 from dte.utils import build_dte_json, numero_a_letras
 from dte.views import ajustar_precision_items, ajustar_precision_resumen
@@ -73,6 +73,13 @@ class Command(BaseCommand):
                 )
                 return
             
+            sucursal = self._obtener_o_crear_sucursal(emisor)
+            if not sucursal:
+                self.stdout.write(
+                    self.style.ERROR('No se pudo obtener/crear sucursal')
+                )
+                return
+            
             # Configurar servicio DTE
             servicio = DTEService(
                 emisor=emisor,
@@ -91,6 +98,33 @@ class Command(BaseCommand):
                 )
                 return
             
+            emisor_maestro = emisor
+            if not emisor_maestro:
+                self.stdout.write(
+                    self.style.ERROR('No se encontró emisor maestro configurado')
+                )
+                return
+            emisor_data = {
+                "nit": emisor_maestro.nit,
+                "nrc": emisor_maestro.nrc,
+                "nombre": emisor_maestro.nombre,
+                "codActividad": emisor_maestro.codActividad.codigo,
+                "descActividad": emisor_maestro.descActividad,
+                "nombreComercial": emisor_maestro.nombreComercial,
+                "tipoEstablecimiento": emisor_maestro.tipoEstablecimiento.codigo,
+                "direccion": {
+                    "departamento": emisor_maestro.departamento.codigo,
+                    "municipio": emisor_maestro.municipio.codigo,
+                    "complemento": emisor_maestro.complemento
+                },
+                "telefono": emisor_maestro.telefono,
+                "correo": emisor_maestro.correo,
+                "codEstableMH": emisor_maestro.codEstableMH or "0001",
+                "codEstable": emisor_maestro.codEstable or "0001",
+                "codPuntoVentaMH": emisor_maestro.codPuntoVentaMH or "0001",
+                "codPuntoVenta": emisor_maestro.codPuntoVenta or "0001"
+            }
+            
             # Plantilla JSON base (tu ejemplo exitoso)
             plantilla_json = {
                 "identificacion": {
@@ -108,26 +142,7 @@ class Command(BaseCommand):
                     "tipoMoneda": "USD"
                 },
                 "documentoRelacionado": None,
-                "emisor": {
-                    "nit": "07152710640010",
-                    "nrc": "655139",
-                    "nombre": "DANIEL DE JESUS LANDAVERDE",
-                    "codActividad": "45301",
-                    "descActividad": "Venta de partes, piezas y accesorios nuevos para vehiculos automotores",
-                    "nombreComercial": "Auto Repuestos Landes",
-                    "tipoEstablecimiento": "02",
-                    "direccion": {
-                        "departamento": "06",
-                        "municipio": "23",
-                        "complemento": "29 AVENIDA NORTE Y CALLE AL VOLCAN, LOCAL No 3, FRENTE A GASOLINERA UNO, COLONIA ZACAMIL, MEJICANOS, SAN SALVADOR"
-                    },
-                    "telefono": "22726991",
-                    "correo": "landaverdedaniel184@gmail.com",
-                    "codEstableMH": "0001",
-                    "codEstable": "0001",
-                    "codPuntoVentaMH": "0001",
-                    "codPuntoVenta": "0001"
-                },
+                "emisor": emisor_data,
                 "receptor": {
                     "nit": "06140803761068",
                     "nrc": "2711698",
@@ -200,7 +215,33 @@ class Command(BaseCommand):
             }
             
             # Calcular número inicial (después del 34 del ejemplo)
-            numero_inicial = 85
+            # Calcular número inicial dinámicamente para evitar duplicados
+            establecimiento = emisor_maestro.codEstable or "0001"
+            punto_venta = emisor_maestro.codPuntoVenta or "0001"
+            prefijo = f"DTE-03-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-"
+
+            # Buscar el último número de control en la BD
+            ultimo = (
+                Identificacion.objects
+                .filter(numeroControl__startswith=prefijo)
+                .order_by("-numeroControl")
+                .first()
+            )
+
+            if ultimo:
+                ultimo_numero = int(ultimo.numeroControl[-15:])
+                numero_inicial = ultimo_numero + 1
+                self.stdout.write(
+                    self.style.WARNING(f'Último CCF encontrado: {ultimo_numero}. Iniciando desde: {numero_inicial}')
+                )
+            else:
+                numero_inicial = 1
+                self.stdout.write(
+                    self.style.WARNING(f'No se encontraron CCF previos. Iniciando desde: {numero_inicial}')
+                )
+
+            exitosas = 0
+            fallidas = 0
             
             exitosas = 0
             fallidas = 0
@@ -214,13 +255,16 @@ class Command(BaseCommand):
                     fecha_actual = ahora.strftime('%Y-%m-%d')
                     hora_actual = ahora.strftime('%H:%M:%S')
                     nuevo_codigo_generacion = str(uuid.uuid4()).upper()
-                    nuevo_numero_control = f"DTE-03-00010001-{numero_correlativo:015d}"
+                    establecimiento = emisor_maestro.codEstable or "0001"
+                    punto_venta = emisor_maestro.codPuntoVenta or "0001"
+                    nuevo_numero_control = f"DTE-03-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-{numero_correlativo:015d}"
                     
                     self.stdout.write(f'Enviando CCF {i+1}/50 (correlativo {numero_correlativo})...')
                     
                     # Crear registro en BD
                     factura = self._crear_factura_bd(
                         emisor, 
+                        sucursal,
                         numero_correlativo, 
                         nuevo_codigo_generacion, 
                         fecha_actual, 
@@ -353,7 +397,7 @@ class Command(BaseCommand):
                 self.style.ERROR(f'Error general: {str(e)}')
             )
             
-    def _crear_factura_bd(self, emisor, numero_correlativo, codigo_generacion, fecha_actual, hora_actual):
+    def _crear_factura_bd(self, emisor, sucursal, numero_correlativo, codigo_generacion, fecha_actual, hora_actual ):
         """Crea la factura completa en la base de datos usando los mismos datos del JSON exitoso"""
         
         with transaction.atomic():
@@ -411,7 +455,8 @@ class Command(BaseCommand):
             factura = FacturaElectronica.objects.create(
                 identificacion=identificacion,
                 emisor=emisor,
-                receptor=receptor
+                receptor=receptor,
+                sucursal=sucursal 
             )
             
             # 5. Crear item (datos exactos del JSON exitoso)
@@ -567,3 +612,38 @@ class Command(BaseCommand):
         self.stdout.write('   - Fecha_Emision, Hora_Emision, Estado_Hacienda,')
         self.stdout.write('   - Sello_Recepcion, Fecha_Envio')
         self.stdout.write('='*50)
+
+    def _obtener_o_crear_sucursal(self, emisor):
+        """Obtiene o crea la sucursal principal del emisor"""
+        try:
+            # Intentar obtener la primera sucursal activa
+            sucursal = Sucursal.objects.filter(activa=True).first()
+            
+            if sucursal:
+                self.stdout.write(f'Usando sucursal existente: {sucursal.nombre}')
+                return sucursal
+            
+            # Si no existe ninguna, crear una con los datos del emisor
+            self.stdout.write('No se encontró sucursal. Creando sucursal principal...')
+            
+            sucursal = Sucursal.objects.create(
+                nombre='Sucursal Principal',
+                codigo='SUC001',
+                codEstableMH=emisor.codEstableMH or '0001',
+                codEstable=emisor.codEstable or '0001',
+                codPuntoVentaMH=emisor.codPuntoVentaMH or '0001',
+                codPuntoVenta=emisor.codPuntoVenta or '0001',
+                activa=True
+            )
+            
+            self.stdout.write(
+                self.style.SUCCESS(f'✓ Sucursal creada: {sucursal.nombre}')
+            )
+            
+            return sucursal
+            
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f'Error obteniendo/creando sucursal: {str(e)}')
+            )
+            raise

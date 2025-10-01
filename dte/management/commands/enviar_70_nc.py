@@ -17,7 +17,7 @@ from dte.models import (
     Resumen, TipoDocumento, AmbienteDestino, ModeloFacturacion, 
     TipoTransmision, UnidadMedida, CondicionOperacion, TipoItem, 
     Tributo, TributoResumen, TipoDocReceptor, DocumentoRelacionado,
-    GeneracionDocumento
+    GeneracionDocumento, Sucursal  # AGREGAR Sucursal
 )
 from dte.utils import build_dte_json, numero_a_letras
 from dte.views import ajustar_precision_items, ajustar_precision_resumen
@@ -103,6 +103,14 @@ class Command(BaseCommand):
                 )
                 return
             
+            # Obtener sucursal activa
+            sucursal = Sucursal.objects.filter(activa=True).first()
+            if not sucursal:
+                self.stdout.write(
+                    self.style.ERROR('No se encontró sucursal activa configurada')
+                )
+                return
+            
             # Configurar servicio DTE
             servicio = DTEService(
                 emisor=emisor,
@@ -121,8 +129,21 @@ class Command(BaseCommand):
                 )
                 return
             
-            # Calcular número inicial para NC (después del 36 del ejemplo)
-            numero_inicial = 87
+            # Calcular número inicial dinámicamente desde la BD
+            prefijo = f"DTE-05-{sucursal.codEstable.zfill(4)}{sucursal.codPuntoVenta.zfill(4)}-"
+            ultimo = (
+                Identificacion.objects.filter(numeroControl__startswith=prefijo)
+                .order_by("-numeroControl")
+                .first()
+            )
+            numero_inicial = 1 if not ultimo else int(ultimo.numeroControl[-15:]) + 1
+            
+            self.stdout.write(
+                self.style.SUCCESS(f'📊 Correlativo inicial para NC: {numero_inicial}')
+            )
+            self.stdout.write(
+                self.style.SUCCESS(f'📊 Sucursal: {sucursal.nombre} ({sucursal.codigo})')
+            )
             
             exitosas = 0
             fallidas = 0
@@ -137,14 +158,14 @@ class Command(BaseCommand):
                     fecha_actual = ahora.strftime('%Y-%m-%d')
                     hora_actual = ahora.strftime('%H:%M:%S')
                     nuevo_codigo_generacion = str(uuid.uuid4()).upper()
-                    nuevo_numero_control = f"DTE-05-00010001-{numero_correlativo:015d}"
                     
                     self.stdout.write(f'Enviando NC {i+1}/50 (correlativo {numero_correlativo})...')
                     self.stdout.write(f'  CCF relacionado: {ccf_relacionado["codigo_generacion"]}')
                     
                     # Crear registro en BD
                     factura = self._crear_nc_bd(
-                        emisor, 
+                        emisor,
+                        sucursal,
                         numero_correlativo, 
                         nuevo_codigo_generacion, 
                         fecha_actual, 
@@ -153,7 +174,7 @@ class Command(BaseCommand):
                     )
                     
                     # DEBUG: Mostrar campos cambiados
-                    self.stdout.write(f'  Número Control NC: {nuevo_numero_control}')
+                    self.stdout.write(f'  Número Control NC: {factura.identificacion.numeroControl}')
                     self.stdout.write(f'  Código Generación NC: {nuevo_codigo_generacion}')
                     self.stdout.write(f'  Fecha: {fecha_actual} {hora_actual}')
                     self.stdout.write(f'  ID en BD: {factura.id}')
@@ -183,7 +204,7 @@ class Command(BaseCommand):
                     self._guardar_en_csv(
                         nc_csv_path, 
                         i + 1, 
-                        nuevo_numero_control, 
+                        factura.identificacion.numeroControl, 
                         nuevo_codigo_generacion, 
                         fecha_actual, 
                         hora_actual,
@@ -198,7 +219,7 @@ class Command(BaseCommand):
                         exitosas += 1
                         self.stdout.write(
                             self.style.SUCCESS(
-                                f'✓ NC {nuevo_numero_control} enviada exitosamente'
+                                f'✔ NC {factura.identificacion.numeroControl} enviada exitosamente'
                             )
                         )
                         self.stdout.write(
@@ -209,7 +230,7 @@ class Command(BaseCommand):
                         error_msg = resultado.get("descripcion", "Error desconocido")
                         self.stdout.write(
                             self.style.ERROR(
-                                f'✗ NC RECHAZADA: {nuevo_numero_control}'
+                                f'✗ NC RECHAZADA: {factura.identificacion.numeroControl}'
                             )
                         )
                         self.stdout.write(
@@ -242,7 +263,7 @@ class Command(BaseCommand):
                     # Intentar guardar excepción en CSV
                     try:
                         numero_correlativo = numero_inicial + i
-                        nuevo_numero_control = f"DTE-05-00010001-{numero_correlativo:015d}"
+                        nuevo_numero_control = f"DTE-05-{sucursal.codEstable.zfill(4)}{sucursal.codPuntoVenta.zfill(4)}-{numero_correlativo:015d}"
                         nuevo_codigo_generacion = "ERROR-" + str(uuid.uuid4()).upper()
                         ahora = timezone.now()
                         fecha_actual = ahora.strftime('%Y-%m-%d')
@@ -310,7 +331,7 @@ class Command(BaseCommand):
             
         return ccf_datos
 
-    def _crear_nc_bd(self, emisor, numero_correlativo, codigo_generacion, fecha_actual, hora_actual, ccf_relacionado):
+    def _crear_nc_bd(self, emisor, sucursal, numero_correlativo, codigo_generacion, fecha_actual, hora_actual, ccf_relacionado):
         """Crea la Nota de Crédito completa en la base de datos"""
         
         with transaction.atomic():
@@ -342,10 +363,9 @@ class Command(BaseCommand):
                 }
             )
             
-            # 3. Crear identificación NC
-            establecimiento = emisor.codEstable or "0001"
-            punto_venta = emisor.codPuntoVenta or "0001"
-            numero_control = f"DTE-05-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-{numero_correlativo:015d}"
+            # 3. Crear identificación NC - CORREGIDO: usar códigos del emisor
+            # 3. Crear identificación NC - CORREGIDO: usar códigos de la sucursal
+            numero_control = f"DTE-05-{sucursal.codEstable.zfill(4)}{sucursal.codPuntoVenta.zfill(4)}-{numero_correlativo:015d}"
             
             # Convertir fecha y hora de string a objetos datetime
             fecha_obj = datetime.strptime(fecha_actual, '%Y-%m-%d').date()
@@ -367,8 +387,9 @@ class Command(BaseCommand):
             # 4. Crear factura NC
             factura = FacturaElectronica.objects.create(
                 identificacion=identificacion,
-                emisor=emisor,
-                receptor=receptor
+                emisor=emisor,  # CORRECTO: Ya viene del emisor maestro
+                receptor=receptor,
+                sucursal=sucursal
             )
             
             # 5. Crear documento relacionado (CCF original)
@@ -380,10 +401,7 @@ class Command(BaseCommand):
                 fechaEmision=datetime.strptime(ccf_relacionado["fecha_emision"], '%Y-%m-%d').date()
             )
             
-            # 6. Crear detalle de NC (sin modelo específico, se manejará en el JSON)
-            # NotaCreditoDetalle se creará automáticamente o se manejará en build_dte_json
-            
-            # 7. Crear item (datos exactos del JSON exitoso de NC)
+            # 6. Crear item (datos exactos del JSON exitoso de NC)
             cantidad = ajustar_precision_items(1.0)
             precio_unitario = ajustar_precision_items(88.5)  # Precio sin IVA
             venta_gravada = ajustar_precision_items(88.5)
@@ -411,7 +429,7 @@ class Command(BaseCommand):
             tributo_iva = Tributo.objects.get(codigo="20")
             item.tributos.add(tributo_iva)
             
-            # 8. Crear resumen NC (valores exactos del JSON exitoso)
+            # 7. Crear resumen NC (valores exactos del JSON exitoso)
             total_gravada = ajustar_precision_resumen(88.5)
             total_iva = ajustar_precision_resumen(11.5)
             monto_total_operacion = ajustar_precision_resumen(100.0)
@@ -425,22 +443,22 @@ class Command(BaseCommand):
                 descuNoSuj=ajustar_precision_resumen(0.0),
                 descuExenta=ajustar_precision_resumen(0.0),
                 descuGravada=ajustar_precision_resumen(0.0),
-                porcentajeDescuento=ajustar_precision_resumen(0.0),  # AGREGADO: Campo requerido
+                porcentajeDescuento=ajustar_precision_resumen(0.0),
                 totalDescu=ajustar_precision_resumen(0.0),
                 subTotal=total_gravada,
                 ivaPerci1=ajustar_precision_resumen(0.0),
                 ivaRete1=ajustar_precision_resumen(0.0),
                 reteRenta=ajustar_precision_resumen(0.0),
                 montoTotalOperacion=monto_total_operacion,
-                totalNoGravado=ajustar_precision_resumen(0.0),  # AGREGADO: Campo posiblemente requerido
-                totalPagar=monto_total_operacion,  # AGREGADO: Campo posiblemente requerido
+                totalNoGravado=ajustar_precision_resumen(0.0),
+                totalPagar=monto_total_operacion,
                 totalLetras=numero_a_letras(monto_total_operacion),
-                saldoFavor=ajustar_precision_resumen(0.0),  # AGREGADO: Campo posiblemente requerido
+                saldoFavor=ajustar_precision_resumen(0.0),
                 condicionOperacion=CondicionOperacion.objects.get(codigo="1"),
-                numPagoElectronico=""  # AGREGADO: Campo posiblemente requerido
+                numPagoElectronico=""
             )
             
-            # 9. Crear tributo IVA en resumen
+            # 8. Crear tributo IVA en resumen
             TributoResumen.objects.create(
                 resumen=resumen,
                 codigo=tributo_iva,

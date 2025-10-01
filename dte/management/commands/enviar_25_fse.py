@@ -7,7 +7,7 @@ from datetime import datetime
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils import timezone
-
+from dte.models import Emisor, Sucursal, Identificacion
 from dte.services import DTEService
 from dte.models import Emisor
 
@@ -31,11 +31,20 @@ class Command(BaseCommand):
         )
         
         try:
-            # Obtener emisor para configurar servicio
+            # Obtener emisor maestro
             emisor = Emisor.objects.first()
             if not emisor:
                 self.stdout.write(
                     self.style.ERROR('No se encontró emisor configurado')
+                )
+                return
+            
+            # Obtener sucursal activa
+            from dte.models import Sucursal
+            sucursal = Sucursal.objects.filter(activa=True).first()
+            if not sucursal:
+                self.stdout.write(
+                    self.style.ERROR('No se encontró sucursal activa')
                 )
                 return
             
@@ -57,39 +66,54 @@ class Command(BaseCommand):
                 )
                 return
             
-            # Plantilla JSON base (tu ejemplo exitoso de FSE)
+            # Obtener último correlativo para FSE
+            establecimiento = sucursal.codEstable
+            punto_venta = sucursal.codPuntoVenta
+            prefijo = f"DTE-14-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-"
+            
+            from dte.models import Identificacion
+            ultimo = (
+                Identificacion.objects.filter(numeroControl__startswith=prefijo)
+                .order_by("-numeroControl")
+                .first()
+            )
+            numero_inicial = 1 if not ultimo else int(ultimo.numeroControl[-15:]) + 1
+            
+            self.stdout.write(f'Correlativo inicial FSE: {numero_inicial}')
+            
+            # Plantilla JSON base - DATOS DINÁMICOS DEL EMISOR
             plantilla_json = {
                 "identificacion": {
                     "version": 1,
                     "ambiente": "00",
                     "tipoDte": "14",
-                    "numeroControl": "DTE-14-00010001-000000000000006",  # Se cambiará
-                    "codigoGeneracion": "9C7E54DB-3324-49C1-B6DC-50F995B21E24",  # Se cambiará
+                    "numeroControl": "DTE-14-00010001-000000000000001",  # Se cambiará
+                    "codigoGeneracion": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",  # Se cambiará
                     "tipoModelo": 1,
                     "tipoOperacion": 1,
                     "tipoContingencia": None,
                     "motivoContin": None,
-                    "fecEmi": "2025-07-22",  # Se cambiará
-                    "horEmi": "14:39:45",    # Se cambiará
+                    "fecEmi": "2025-01-01",  # Se cambiará
+                    "horEmi": "00:00:00",    # Se cambiará
                     "tipoMoneda": "USD"
                 },
                 "emisor": {
-                    "nit": "07152710640010",
-                    "nrc": "655139",
-                    "nombre": "DANIEL DE JESUS LANDAVERDE",
-                    "codActividad": "45301",
-                    "descActividad": "Venta de partes, piezas y accesorios nuevos para vehiculos automotores",
+                    "nit": emisor.nit,
+                    "nrc": emisor.nrc,
+                    "nombre": emisor.nombre,
+                    "codActividad": emisor.codActividad.codigo,
+                    "descActividad": emisor.descActividad,
                     "direccion": {
-                        "departamento": "06",
-                        "municipio": "23",
-                        "complemento": "29 AVENIDA NORTE Y CALLE AL VOLCAN, LOCAL No 3, FRENTE A GASOLINERA UNO, COLONIA ZACAMIL, MEJICANOS, SAN SALVADOR"
+                        "departamento": emisor.departamento.codigo,
+                        "municipio": emisor.municipio.codigo,
+                        "complemento": emisor.complemento
                     },
-                    "telefono": "22726991",
-                    "codEstableMH": "0001",
-                    "codEstable": "0001",
-                    "codPuntoVentaMH": "0001",
-                    "codPuntoVenta": "0001",
-                    "correo": "landaverdedaniel184@gmail.com"
+                    "telefono": emisor.telefono,
+                    "codEstableMH": sucursal.codEstableMH,
+                    "codEstable": sucursal.codEstable,
+                    "codPuntoVentaMH": sucursal.codPuntoVentaMH,
+                    "codPuntoVenta": sucursal.codPuntoVenta,
+                    "correo": emisor.correo
                 },
                 "sujetoExcluido": {
                     "tipoDocumento": "13",
@@ -134,9 +158,6 @@ class Command(BaseCommand):
                 "apendice": None
             }
             
-            # Calcular número inicial (después del 6 del ejemplo)
-            numero_inicial = 8
-            
             exitosas = 0
             fallidas = 0
             
@@ -154,7 +175,7 @@ class Command(BaseCommand):
                     fecha_actual = ahora.strftime('%Y-%m-%d')
                     hora_actual = ahora.strftime('%H:%M:%S')
                     nuevo_codigo_generacion = str(uuid.uuid4()).upper()
-                    nuevo_numero_control = f"DTE-14-00010001-{numero_correlativo:015d}"
+                    nuevo_numero_control = f"DTE-14-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-{numero_correlativo:015d}"
                     
                     # Aplicar cambios
                     dte_json["identificacion"]["numeroControl"] = nuevo_numero_control
@@ -174,7 +195,7 @@ class Command(BaseCommand):
                         exitosas += 1
                         self.stdout.write(
                             self.style.SUCCESS(
-                                f'✓ FSE {nuevo_numero_control} enviada exitosamente'
+                                f'✔ FSE {nuevo_numero_control} enviada exitosamente'
                             )
                         )
                         self.stdout.write(

@@ -13,7 +13,7 @@ import uuid
 from dte.models import (
     FacturaElectronica, Identificacion, Receptor, CuerpoDocumentoItem, 
     Resumen, Emisor, TipoDocumento, AmbienteDestino, ModeloFacturacion, 
-    TipoTransmision, UnidadMedida, CondicionOperacion, TipoItem
+    TipoTransmision, UnidadMedida, CondicionOperacion, TipoItem, Sucursal, TipoDocReceptor, Municipio, Departamento
 )
 from dte.services import DTEService
 from dte.utils import build_dte_json, numero_a_letras
@@ -37,14 +37,26 @@ class Command(BaseCommand):
             default=3,
             help='Segundos de espera entre envíos (default: 3)',
         )
+        parser.add_argument(
+            '--desde',
+            type=int,
+            default=None,
+            help='Número correlativo desde donde iniciar (opcional, si no se especifica continúa desde el último)',
+        )
 
     def handle(self, *args, **options):
         tipo_dte = options['tipo']
         delay = options['delay']
+        correlativo_inicial = options.get('desde') 
         
         self.stdout.write(
             self.style.SUCCESS(f'Iniciando envío de 50 facturas tipo {tipo_dte}')
         )
+
+        if correlativo_inicial:
+            self.stdout.write(
+                self.style.SUCCESS(f'Iniciando desde correlativo: {correlativo_inicial}')
+            )
         
         try:
             # Obtener datos base
@@ -54,17 +66,28 @@ class Command(BaseCommand):
                     self.style.ERROR('No se encontró emisor configurado')
                 )
                 return
+            from dte.models import Sucursal
+            sucursal = Sucursal.objects.filter(activa=True).first()
+            if not sucursal:
+                self.stdout.write(
+                    self.style.ERROR('No se encontró ninguna sucursal activa')
+                )
+                return
+            
+            tipo_doc_receptor = TipoDocReceptor.objects.get(codigo='13')
+            departamento = Departamento.objects.get(codigo='01')
+            municipio = Municipio.objects.get(codigo='14', departamento=departamento)
             
             # Configurar datos base según tu ejemplo
             receptor_data = {
-                'tipoDocumento': '13',
+                'tipoDocumento': tipo_doc_receptor,  # CAMBIAR: instancia en vez de string
                 'numDocumento': '00000000-9',
                 'nombre': 'Juan Perez',
                 'telefono': '70000000',
                 'correo': 'alexanderalfaro1251@gmail.com',
-                'departamento': '01',
-                'municipio': '14',
-                'direccion_complemento': 'Proveedor direccion'
+                'departamento': departamento,  # CAMBIAR: instancia en vez de string
+                'municipio': municipio,  # CAMBIAR: instancia en vez de string
+                'complemento': 'Proveedor direccion'
             }
             
             # Obtener o crear producto de prueba
@@ -80,7 +103,7 @@ class Command(BaseCommand):
             )
             
             # Calcular número de control inicial
-            numero_base = self._calcular_siguiente_numero(tipo_dte)
+            numero_base = self._calcular_siguiente_numero(tipo_dte, sucursal, correlativo_inicial)
             
             servicio = DTEService(
                 emisor=emisor,
@@ -108,7 +131,7 @@ class Command(BaseCommand):
                     
                     # Crear factura
                     factura = self._crear_factura(
-                        emisor, receptor_data, producto, tipo_dte, numero_base + i
+                        receptor_data, producto, tipo_dte, numero_base + i, sucursal
                     )
                     
                     # Enviar a Hacienda
@@ -199,16 +222,17 @@ class Command(BaseCommand):
                 self.style.ERROR(f'Error general: {str(e)}')
             )
 
-    def _calcular_siguiente_numero(self, tipo_dte):
-        """Calcula el siguiente número de control basado en el ejemplo proporcionado"""
-        # El ejemplo tenía: DTE-01-00010001-000000000000069
-        # Extraer el número 69 y sumar 1 para empezar en 70
+    def _calcular_siguiente_numero(self, tipo_dte, sucursal, correlativo_inicial=None):
+        """Calcula el siguiente número de control basado en la sucursal"""
         
-        emisor = Emisor.objects.first()
-        establecimiento = emisor.codEstable or "0001"
-        punto_venta = emisor.codPuntoVenta or "0001"
+        establecimiento = sucursal.codEstable
+        punto_venta = sucursal.codPuntoVenta
         
         prefijo = f"DTE-{tipo_dte}-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-"
+        
+        # Si se especificó un correlativo inicial, usarlo
+        if correlativo_inicial is not None:
+            return correlativo_inicial
         
         # Buscar el último número en la base de datos
         ultimo = (
@@ -219,15 +243,18 @@ class Command(BaseCommand):
         
         if ultimo:
             ultimo_numero = int(ultimo.numeroControl[-15:])
-            # Si el último es menor que 69, empezar desde 70
-            # Si es mayor, continuar secuencialmente
-            return max(ultimo_numero + 1, 70)
+            return ultimo_numero + 1
         else:
-            # No hay facturas previas, empezar desde 70
-            return 70
+            return 1
 
-    def _crear_factura(self, emisor, receptor_data, producto, tipo_dte, numero_correlativo):
+    def _crear_factura(self, receptor_data, producto, tipo_dte, numero_correlativo, sucursal):
         """Crea una factura con los datos especificados"""
+        
+        # Obtener el emisor maestro
+        from dte.forms import _emisor_maestro
+        emisor = _emisor_maestro()
+        if not emisor:
+            raise Exception("No se encontró emisor maestro configurado")
         
         with transaction.atomic():
             # 1. Crear o obtener receptor
@@ -240,13 +267,13 @@ class Command(BaseCommand):
                     'correo': receptor_data['correo'],
                     'departamento': receptor_data['departamento'],
                     'municipio': receptor_data['municipio'],
-                    'direccion_complemento': receptor_data['direccion_complemento']
+                    'complemento': receptor_data['complemento']
                 }
             )
             
-            # 2. Crear identificación
-            establecimiento = emisor.codEstable or "0001"
-            punto_venta = emisor.codPuntoVenta or "0001"
+            # 2. Crear identificación - USAR SUCURSAL para el número de control
+            establecimiento = sucursal.codEstable
+            punto_venta = sucursal.codPuntoVenta
             numero_control = f"DTE-{tipo_dte}-{establecimiento.zfill(4)}{punto_venta.zfill(4)}-{numero_correlativo:015d}"
             
             identificacion = Identificacion.objects.create(
@@ -258,15 +285,16 @@ class Command(BaseCommand):
                 tipoModelo=ModeloFacturacion.objects.get(codigo="1"),
                 tipoOperacion=TipoTransmision.objects.get(codigo="1"),
                 fecEmi=timezone.now().date(),
-                horEmi=timezone.now().time(),  # Eliminar .strftime() para que sea objeto time
+                horEmi=timezone.now().time(),
                 tipoMoneda="USD"
             )
             
-            # 3. Crear factura
+            # 3. Crear factura - AGREGAR SUCURSAL
             factura = FacturaElectronica.objects.create(
                 identificacion=identificacion,
                 emisor=emisor,
-                receptor=receptor
+                receptor=receptor,
+                sucursal=sucursal  # CAMPO OBLIGATORIO
             )
             
             # 4. Crear item - cálculo correcto según tipo de documento

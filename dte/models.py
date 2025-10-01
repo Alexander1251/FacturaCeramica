@@ -1751,9 +1751,9 @@ class AnulacionDocumento(models.Model):
                 get_safe_value(emisor, 'nombreComercial') or 
                 get_safe_value(emisor, 'nombre', 'Establecimiento Principal')
             ),
-            "codEstableMH": get_safe_value(emisor, 'codEstableMH'),
+           
             "codEstable": get_safe_value(emisor, 'codEstable', '0001'),
-            "codPuntoVentaMH": get_safe_value(emisor, 'codPuntoVentaMH'),
+          
             "codPuntoVenta": get_safe_value(emisor, 'codPuntoVenta', '0001'),
             "telefono": get_safe_value(emisor, 'telefono'),
             "correo": get_safe_value(emisor, 'correo')
